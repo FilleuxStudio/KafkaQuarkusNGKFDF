@@ -13,17 +13,17 @@ Une architecture microservices pour une plateforme e-commerce utilisant **Quarku
 
 ```mermaid
 graph TD
-  A[Frontend] -->|Passer commande| B[Order Service]
-  B -->|Événement "order-created"| C[(topic-orders)]
-  C --> D[Inventory Service]
-  D -->|Mise à jour stock| E[(topic-inventory)]
-  D -->|Alerte stock bas| F[(topic-notifications)]
-  F --> G[Notification Service]
-  B --> H[(PostgreSQL)]
-  D --> I[(MongoDB)]
-  G --> J[(MySQL)]
-  E --> K[Prometheus]
-  K --> L[Grafana]
+  A[Frontend] -->|Passer commande| B[Order Service]
+  B -->|Événement order-created| C[topic-orders]
+  C --> D[Inventory Service]
+  D -->|Mise à jour stock| E[topic-inventory]
+  D -->|Alerte stock bas| F[topic-notifications]
+  F --> G[Notification Service]
+  B --> H[(PostgreSQL)]
+  D --> I[(MongoDB)]
+  G --> J[(MySQL)]
+  E --> K[Prometheus]
+  K --> L[Grafana]
 ```
 
 ---
