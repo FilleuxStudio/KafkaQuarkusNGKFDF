@@ -1,6 +1,3 @@
-(Due to technical issues, the search service is temporarily unavailable.)
-
-```markdown
 # E-Commerce Microservices avec Quarkus et Kafka
 
 [![Quarkus](https://img.shields.io/badge/Quarkus-2.16.3-red?logo=quarkus)](https://quarkus.io/)
@@ -50,6 +47,7 @@ graph TD
 - **Endpoint** : `POST /orders` (Crée une commande)
 - **Kafka** : Produit des événements dans `topic-orders`
 - **Base de données** : PostgreSQL
+
 ```java
 @POST
 public Response createOrder(Order order) {
@@ -61,6 +59,7 @@ public Response createOrder(Order order) {
 ### 2. **Service d'Inventaire** (`inventory-service`)
 - **Abonnement Kafka** : `topic-orders` (consomme les commandes)
 - **Action** : Met à jour le stock et publie des alertes dans `topic-notifications`
+
 ```java
 @Incoming("orders-in")
 public void updateStock(Order order) {
@@ -74,6 +73,7 @@ public void updateStock(Order order) {
 ### 3. **Service de Notifications** (`notification-service`)
 - **Abonnement Kafka** : `topic-notifications`
 - **Actions** : Envoi d'e-mails/SMS via SendGrid ou Twilio
+
 ```java
 @Incoming("notifications-in")
 public void sendAlert(String alert) {
@@ -91,17 +91,20 @@ public void sendAlert(String alert) {
 - Maven 3.9+
 
 ### 1. Cloner le dépôt
+
 ```bash
 git clone https://github.com/yourusername/ecommerce-microservices.git
 cd ecommerce-microservices
 ```
 
 ### 2. Démarrer l'infrastructure
+
 ```bash
 docker-compose up -d  # Kafka, PostgreSQL, MongoDB, Prometheus, Grafana
 ```
 
 ### 3. Lancer les microservices
+
 ```bash
 mvn quarkus:dev -pl order-service
 mvn quarkus:dev -pl inventory-service
@@ -140,10 +143,12 @@ Accédez à [http://localhost:3000](http://localhost:3000) (admin/admin) et impo
 
 1. **Quarkus Dev Services** : Provisionne automatiquement Kafka et les BDD en dev.
 2. **Tests Locaux** : 
+
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{"productId": "123", "quantity": 2}' http://localhost:8080/orders
 ```
 3. **Déploiement** : 
+
 ```bash
 mvn clean package -Dquarkus.container-image.build=true
 docker-compose --profile prod up -d
@@ -168,15 +173,10 @@ docker-compose --profile prod up -d
 
 ---
 
-**License** : [MIT](LICENSE) | **Version** : 1.0.0  
-✨ **Édité avec soin par** [Votre Nom] - *2024*
-```
-
----
-
 ### 📥 Configuration des Fichiers Clés
 
 1. **`docker-compose.yml`** :
+
 ```yaml
 version: '3'
 services:
@@ -205,6 +205,7 @@ services:
 ```
 
 2. **`application.properties`** (exemple pour Order Service) :
+
 ```properties
 quarkus.datasource.jdbc.url=jdbc:postgresql://postgres:5432/orders
 quarkus.datasource.username=quarkus
