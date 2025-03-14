@@ -1,19 +1,22 @@
+// ProductCard.jsx
 import React from "react";
 
-function ProductCard({ product }) {
-  const { name, price, image } = product;
-
+function ProductCard({ product, onAddToCart }) {
   const handleAddToCart = () => {
-    // This is where you'd dispatch an event or call an API
-    // to add the item to the cart
-    alert(`Added ${name} to cart!`);
+    // Create an order object (you can expand this if needed)
+    const order = {
+      product: product.name,
+      quantity: 1,
+      price: product.price,
+    };
+    onAddToCart(order);
   };
 
   return (
     <div className="product-card">
-      <img src={image} alt={name} className="product-image" />
-      <h3>{name}</h3>
-      <p className="product-price">${price}</p>
+      <img src={product.image} alt={product.name} className="product-image" />
+      <h3>{product.name}</h3>
+      <p className="product-price">${product.price}</p>
       <button onClick={handleAddToCart} className="add-to-cart-button">
         Add to Cart
       </button>
