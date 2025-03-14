@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+    command: >
+      bash -c "
+        kafka-storage.sh format --ignore-formatted --cluster-id=$(bin/kafka-storage.sh random-uuid) --config /kafka/config/kraft/server.properties &&
+        kafka-server-start.sh /kafka/config/kraft/server.properties
+      "
+    healthcheck:
+      test: [ "CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+  
+  init-topics:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: |
+      bash -c '
+        until kafka-topics --bootstrap-server kafka:9092 --list; do
+          sleep 1
+        done
+        kafka-topics --bootstrap-server kafka:9092 --create --topic orders --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --topic inventory --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --topic notifications --partitions 3 --replication-factor 1
+      '
+
+  quarkus-app:
+    build: .
+    container_name: quarkus-notification-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      FIREBASE_DATABASE_URL: "your-firebase-database-url"
+      FIREBASE_CREDENTIALS_PATH: "/app/firebase-credentials.json"
+    volumes:
+      - ./firebase-credentials.json:/app/firebase-credentials.json
+
+networks:
+  default:
+    name: kafka-network
+    driver: bridge
