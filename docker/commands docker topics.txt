@@ -1,0 +1,1 @@
+docker exec -it kafka_kafka_1 kafka-topics --create --topic notifications --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
