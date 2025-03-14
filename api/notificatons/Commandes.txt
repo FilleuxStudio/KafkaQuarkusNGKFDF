@@ -1,0 +1,3 @@
+Créatioin du projet : 
+quarkus create app com.cclfilleux.notification:notification-service     -x smallrye-reactive-messaging-kafka,resteasy-reactive-jackson,hibernate-validator,smallrye-health
+
