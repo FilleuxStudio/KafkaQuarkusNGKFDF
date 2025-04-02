@@ -1,0 +1,162 @@
+Exactement ! Pour implémenter les notifications WebPush dans votre application React, vous aurez besoin de :
+1. Générer les clés VAPID
+
+Étape 1 : Installez le package web-push
+bash
+Copy
+
+npm install web-push -g
+
+Étape 2 : Générez les clés
+bash
+Copy
+
+web-push generate-vapid-keys
+
+Résultat :
+Copy
+
+Public Key: BPubKey... (à partager avec le frontend)
+Private Key: PrivKey... (à garder secret côté backend)
+
+2. Configuration dans Quarkus
+
+Dans application.properties :
+properties
+Copy
+
+webpush.public.key=BPubKey...
+webpush.private.key=PrivKey...
+
+3. Service Worker dans React
+
+Créez public/service-worker.js :
+javascript
+Copy
+
+self.addEventListener('push', function(event) {
+  const data = event.data.json();
+  self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: '/logo.png'
+  });
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(clients.openWindow('https://votre-site.com'));
+});
+
+4. Enregistrement du Service Worker
+
+Dans votre composant React principal (ex: App.js) :
+javascript
+Copy
+
+import { useEffect } from 'react';
+
+function App() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('SW enregistré :', registration);
+        })
+        .catch(error => {
+          console.log('Échec SW :', error);
+        });
+    }
+  }, []);
+
+  return (
+    // Votre JSX
+  );
+}
+
+5. Abonnement aux notifications
+
+Dans un composant React :
+javascript
+Copy
+
+const subscribeToNotifications = async () => {
+  const publicVapidKey = 'BPubKey...'; // Même clé que dans Quarkus
+
+  // Demande la permission
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+
+  // Enregistre le subscription
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+  });
+
+  // Envoie au backend Quarkus
+  await fetch('http://localhost:8080/notifications/subscribe/user123', {
+    method: 'POST',
+    body: JSON.stringify(subscription),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
+// Helper pour convertir la clé
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4;
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+6. Sécurité HTTPS
+
+Les WebPush nécessitent HTTPS en production. Pour le développement local :
+
+    Installez un certificat auto-signé
+
+bash
+Copy
+
+mkcert -install
+
+    Créez un certificat pour localhost
+
+bash
+Copy
+
+mkcert localhost
+
+    Lancez React avec HTTPS
+
+bash
+Copy
+
+HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem npm start
+
+7. Workflow complet
+
+    L'utilisateur clique sur "Activer les notifications"
+
+    Le frontend demande la permission
+
+    Le service worker est enregistré
+
+    La subscription est envoyée à Quarkus
+
+    Quand Kafka envoie un événement notifications
+
+    Quarkus envoie la notification via WebPush
+
+Dépannage courant
+
+    Erreur de clé : Vérifiez que les clés VAPID sont identiques partout
+
+    Service worker non enregistré : Vérifiez le chemin /service-worker.js
+
+    Notifications silencieuses : Ajoutez userVisibleOnly: true
