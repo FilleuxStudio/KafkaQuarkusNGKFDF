@@ -1,0 +1,52 @@
+1. Installer mkcert pour générer des certificats SSL locaux
+
+mkcert est un outil simple qui crée des certificats SSL locaux approuvés par votre système. Il est disponible pour macOS, Windows et Linux.
+
+    macOS :
+
+brew install mkcert
+brew install nss  # Si vous utilisez Firefox
+
+Windows : Téléchargez et installez mkcert depuis le dépôt GitHub.
+
+Linux : Installez mkcert en utilisant le gestionnaire de paquets de votre distribution. Par exemple, sur Ubuntu :
+
+    sudo apt install libnss3-tools
+    sudo apt install mkcert
+
+2. Générer un certificat SSL local
+
+Une fois mkcert installé, générez un certificat pour localhost :
+
+mkcert -install
+mkcert localhost
+
+Cela créera deux fichiers : localhost.pem (certificat) et localhost-key.pem (clé privée).
+3. Configurer Vite pour utiliser HTTPS
+
+Modifiez votre fichier vite.config.js pour inclure la configuration HTTPS :
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import path from 'path'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, 'localhost-key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'localhost.pem'))
+    }
+  }
+})
+
+Assurez-vous que les chemins vers localhost-key.pem et localhost.pem sont corrects par rapport à la localisation de votre fichier vite.config.js.
+4. Démarrer le serveur en HTTPS
+
+Lorsque vous lancez votre serveur Vite avec npm run dev, il devrait maintenant être accessible via HTTPS à https://localhost:5173. Si vous avez configuré le port différemment, ajustez l'URL en conséquence.
+
+Remarque : Lors de la première utilisation, votre navigateur peut afficher un avertissement concernant le certificat SSL auto-signé. Acceptez-le pour continuer.
+
+En suivant ces étapes, votre serveur de développement Vite sera configuré pour utiliser HTTPS, ce qui est essentiel pour tester des fonctionnalités nécessitant un contexte sécurisé, comme les notifications push.
