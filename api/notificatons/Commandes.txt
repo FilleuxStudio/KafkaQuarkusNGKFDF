@@ -1,3 +1,37 @@
 Créatioin du projet : 
-quarkus create app com.cclfilleux.notification:notification-service     -x smallrye-reactive-messaging-kafka,resteasy-reactive-jackson,hibernate-validator,smallrye-health
+mvn io.quarkus:quarkus-maven-plugin:create \
+    -DprojectGroupId=com.cclfilleux.notification \
+    -DprojectArtifactId=notification-service \
+    -Dextensions="resteasy-reactive,smallrye-reactive-messaging-kafka,jackson" \
+    -DprojectVersion=0.0.1
+
+
+
+3. Workflow de déploiement
+a. Build et lancement :
+bash
+Copy
+
+# Construire l'image Quarkus
+docker-compose build notification-service
+
+# Démarrer tous les services
+docker-compose up -d
+
+b. Vérification :
+bash
+Copy
+
+# Vérifier que Kafka est opérationnel
+docker exec -it kafka_kafka_1 kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# Tester l'API
+curl http://localhost:8080/notifications
+
+c. Arrêt propre :
+bash
+Copy
+
+docker-compose down -v
+
 
