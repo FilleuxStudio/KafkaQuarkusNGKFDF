@@ -1,0 +1,158 @@
+version: "3.8"
+services:
+  kafka1:
+    image: bitnami/kafka:latest
+    hostname: kafka1
+    container_name: kafka1
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka1:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_KRAFT_CLUSTER_ID=11111111-1111-1111-1111-111111111111
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    volumes:
+      - kafka1_data:/bitnami/kafka
+    networks:
+      kafka_network:
+        aliases:
+          - kafka1
+
+  kafka2:
+    image: bitnami/kafka:latest
+    hostname: kafka2
+    container_name: kafka2
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_KRAFT_CLUSTER_ID=11111111-1111-1111-1111-111111111111
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+    ports:
+      - "9094:9092"
+      - "9096:9093"
+    volumes:
+      - kafka2_data:/bitnami/kafka
+    networks:
+      kafka_network:
+        aliases:
+          - kafka2
+
+  kafka3:
+    image: bitnami/kafka:latest
+    hostname: kafka3
+    container_name: kafka3
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=3
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka3:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_KRAFT_CLUSTER_ID=11111111-1111-1111-1111-111111111111
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+    ports:
+      - "9095:9092"
+      - "9097:9093"
+    volumes:
+      - kafka3_data:/bitnami/kafka
+    networks:
+      kafka_network:
+        aliases:
+          - kafka3
+
+  orders-api:
+    build:
+      context: ./api/orders/orders-api
+      dockerfile: src/main/docker/Dockerfile.jvm
+    ports:
+      - "8080:8080"
+    environment:
+      - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka_network
+      - default
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3002:80"  # Frontend available at http://localhost:3002
+    depends_on:
+      - orders-api
+    networks:
+      - default
+      - kafka_network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=KafkaKraftCluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka_network
+      - default
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"  # Grafana available at http://localhost:3000
+    depends_on:
+      - prometheus
+    networks:
+      - default
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    platform: linux/arm64/v8
+    ports:
+      - "8082:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - default
+
+volumes:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
+
+networks:
+  kafka_network:
+    driver: bridge

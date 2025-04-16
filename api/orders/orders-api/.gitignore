@@ -45,4 +45,4 @@ nb-configuration.xml
 .certs/
 
 # Firebase Service Account Key
-credentials/kafka-ccm-dev-cloud-df-kf-ng-firebase-adminsdk-fbsvc-3028d23506.json
+credentials/*
