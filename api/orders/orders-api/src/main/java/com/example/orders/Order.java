@@ -1,10 +1,13 @@
 package com.example.orders;
 
+import java.time.Instant;
+
 public class Order {
-    private String id;   // Firestore document ID
+    private String id;         // Firestore document ID
     private String product;
     private int quantity;
     private double price;
+    private Instant timestamp; // New field for timestamp
 
     public Order() {}
 
@@ -40,5 +43,13 @@ public class Order {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
     }
 }
