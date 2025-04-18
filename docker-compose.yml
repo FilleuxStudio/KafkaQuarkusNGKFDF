@@ -1,5 +1,6 @@
 version: "3.8"
 services:
+  # === Kafka brokers with JMX enabled ===
   kafka1:
     image: bitnami/kafka:latest
     hostname: kafka1
@@ -15,6 +16,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+      - KAFKA_CFG_JMX_PORT=9999
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -22,8 +24,7 @@ services:
       - kafka1_data:/bitnami/kafka
     networks:
       kafka_network:
-        aliases:
-          - kafka1
+        aliases: [ kafka1 ]
 
   kafka2:
     image: bitnami/kafka:latest
@@ -40,6 +41,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+      - KAFKA_CFG_JMX_PORT=9999
     ports:
       - "9094:9092"
       - "9096:9093"
@@ -47,8 +49,7 @@ services:
       - kafka2_data:/bitnami/kafka
     networks:
       kafka_network:
-        aliases:
-          - kafka2
+        aliases: [ kafka2 ]
 
   kafka3:
     image: bitnami/kafka:latest
@@ -65,6 +66,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CFG_FORCE_BROKER_REFORMAT=yes
+      - KAFKA_CFG_JMX_PORT=9999
     ports:
       - "9095:9092"
       - "9097:9093"
@@ -72,86 +74,94 @@ services:
       - kafka3_data:/bitnami/kafka
     networks:
       kafka_network:
-        aliases:
-          - kafka3
+        aliases: [ kafka3 ]
 
+  # === Build‑based JMX‑HTTP sidecars ===
+  kafka1-jmx:
+    build:
+      context: ./config
+      dockerfile: Dockerfile.jmx
+    network_mode: "container:kafka1"
+    depends_on: [ kafka1 ]
+
+  kafka2-jmx:
+    build:
+      context: ./config
+      dockerfile: Dockerfile.jmx
+    network_mode: "container:kafka2"
+    depends_on: [ kafka2 ]
+
+  kafka3-jmx:
+    build:
+      context: ./config
+      dockerfile: Dockerfile.jmx
+    network_mode: "container:kafka3"
+    depends_on: [ kafka3 ]
+
+  # === Your existing services ===
   orders-api:
     build:
       context: ./api/orders/orders-api
       dockerfile: src/main/docker/Dockerfile.jvm
-    ports:
-      - "8080:8080"
+    ports: [ "8080:8080" ]
     environment:
       - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
-    depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
-    networks:
-      - kafka_network
-      - default
+    networks: [ kafka_network, default ]
 
   frontend:
     build: ./frontend
-    ports:
-      - "3002:80"  # Frontend available at http://localhost:3002
-    depends_on:
-      - orders-api
-    networks:
-      - default
-      - kafka_network
+    ports: [ "3002:80" ]
+    depends_on: [ orders-api ]
+    networks: [ default, kafka_network ]
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
-    ports:
-      - "8081:8080"
+    ports: [ "8081:8080" ]
     environment:
       - KAFKA_CLUSTERS_0_NAME=KafkaKraftCluster
       - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
-    depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
-    networks:
-      - kafka_network
-      - default
+    depends_on: [ kafka1, kafka2, kafka3 ]
+    networks: [ kafka_network, default ]
 
+  # === Prometheus with persistent data ===
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
-    ports:
-      - "9090:9090"
-    networks:
-      - default
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports: [ "9090:9090" ]
+    networks: [ default ]
 
+  # === Grafana with provisioning & persistent data ===
   grafana:
     image: grafana/grafana:latest
-    ports:
-      - "3000:3000"  # Grafana available at http://localhost:3000
-    depends_on:
-      - prometheus
-    networks:
-      - default
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: [ "3000:3000" ]
+    depends_on: [ prometheus ]
+    networks: [ default ]
 
+  # === Container monitoring ===
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     platform: linux/arm64/v8
-    ports:
-      - "8082:8080"
+    ports: [ "8082:8080" ]
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /:/rootfs:ro
-      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - default
+    networks: [ default ]
 
 volumes:
   kafka1_data:
   kafka2_data:
   kafka3_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   kafka_network:

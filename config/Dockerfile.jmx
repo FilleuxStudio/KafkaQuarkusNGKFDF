@@ -1,0 +1,14 @@
+# config/Dockerfile.jmx
+FROM eclipse-temurin:17-jre-focal
+
+# Fetch the standalone HTTP server JAR from Maven Central
+RUN apt-get update && apt-get install -y curl \
+  && curl -L \
+     https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/0.16.1/jmx_prometheus_httpserver-0.16.1-jar-with-dependencies.jar \
+     -o /jmx_prometheus_httpserver.jar \
+  && apt-get purge -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copy your config into /config.yml
+COPY kafka_jmx_config.yml /config.yml
+
+ENTRYPOINT ["java", "-jar", "/jmx_prometheus_httpserver.jar", "5556", "/config.yml"]
