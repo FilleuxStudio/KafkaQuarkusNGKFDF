@@ -1,2 +1,32 @@
 api/notifications/notification-service/src/main/resources/firebase-config.json
 .DS_Store
+
+# Local .terraform directories
+**/.terraform/*
+
+# State files
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Sensitive variable files (don’t check these in!)
+*.tfvars
+*.tfvars.json
+
+# CLI config
+.terraformrc
+terraform.rc
+
+# Generated plan files
+*.plan
+
+# Credentials (if you ever use gcloud JSON keys, etc.)
+*.json
