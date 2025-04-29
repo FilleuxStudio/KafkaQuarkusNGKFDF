@@ -1,1 +1,2 @@
 api/notifications/notification-service/src/main/resources/firebase-config.json
+/api/inventorys/inventory-service/src/main/resources/firebase-service-account.json

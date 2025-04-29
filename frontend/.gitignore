@@ -7,7 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-api/inventorys/inventory-service/src/main/resources/firebase-service-account.json
+/api/inventorys/inventory-service/src/main/resources/firebase-service-account.json
 
 node_modules
 dist
