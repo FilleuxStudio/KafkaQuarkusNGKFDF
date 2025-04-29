@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+api/inventorys/inventory-service/src/main/resources/firebase-service-account.json
