@@ -7,6 +7,7 @@ public class Order {
     private String product;
     private int quantity;
     private double price;
+    private double totalPrice;
     private Instant timestamp; // New field for timestamp
 
     public Order() {}
@@ -51,5 +52,13 @@ public class Order {
 
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
     }
 }

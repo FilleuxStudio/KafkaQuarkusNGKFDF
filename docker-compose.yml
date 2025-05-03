@@ -81,21 +81,21 @@ services:
     build:
       context: ./config
       dockerfile: Dockerfile.jmx
-    network_mode: "container:kafka1"
+    network_mode: "service:kafka1"
     depends_on: [ kafka1 ]
 
   kafka2-jmx:
     build:
       context: ./config
       dockerfile: Dockerfile.jmx
-    network_mode: "container:kafka2"
+    network_mode: "service:kafka2"
     depends_on: [ kafka2 ]
 
   kafka3-jmx:
     build:
       context: ./config
       dockerfile: Dockerfile.jmx
-    network_mode: "container:kafka3"
+    network_mode: "service:kafka3"
     depends_on: [ kafka3 ]
 
   # === Your existing services ===
@@ -147,7 +147,8 @@ services:
   # === Container monitoring ===
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
-    platform: linux/arm64/v8
+    container_name: cadvisor
+    platform: linux/amd64
     ports: [ "8082:8080" ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro

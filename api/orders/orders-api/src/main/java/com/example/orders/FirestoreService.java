@@ -21,6 +21,10 @@ public class FirestoreService {
     private static final String COLLECTION_NAME = "orders";
 
     public Order createOrder(Order order) throws InterruptedException, ExecutionException {
+
+        // Calculate the total price
+        order.setTotalPrice(order.getPrice() * order.getQuantity());
+
         // Create a new document with an auto-generated ID
         DocumentReference docRef = firestore.collection(COLLECTION_NAME).document();
         // Set the generated ID into our order
