@@ -1,0 +1,19 @@
+#Init Projet
+
+./mvn io.quarkus.platform:quarkus-maven-plugin:3.21.3:create \
+  -DprojectGroupId=org.KafkaQuarkusNGKFDF \
+  -DprojectArtifactId=kafka-Notification \
+  -Dextensions="rest-jackson,messaging-kafka" \
+  -DnoCode
+
+#Extensions
+./mvnw quarkus:add-extension -Dextensions="io.quarkus:quarkus-messaging-kafka,quarkus-websockets,io.quarkiverse.googlecloudservices:quarkus-google-cloud-firebase-admin"
+
+./mvnw quarkus:add-extension -Dextensions="messaging-kafka"
+
+
+./mvnw install
+
+./mvnw clean compile
+
+
