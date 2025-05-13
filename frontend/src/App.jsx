@@ -5,7 +5,6 @@ import Hero from "./Hero";
 import ProductList from "./ProductList";
 import CartDrawer from "./CartDrawer";
 import Toast from "./Toast";
-import NotificationComponent from './NotificationComponent';
 import "./App.css";
 
 function App() {

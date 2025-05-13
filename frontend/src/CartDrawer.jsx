@@ -1,8 +1,5 @@
-// src/CartDrawer.jsx
 import React, { useState } from "react";
 import "./CartDrawer.css";
-
-const API_BASE = import.meta.env.VITE_API_BASE;
 
 const CartDrawer = ({
   isOpen,
@@ -10,38 +7,40 @@ const CartDrawer = ({
   cartItems,
   clearCart,
   removeItemFromCart,
-  updateItemQuantity, // now expected
 }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const submitOrders = async () => {
     setSubmitting(true);
     try {
+      // Submit each item to the Orders API
       for (const order of cartItems) {
-        const res = await fetch(`${API_BASE}/orders`, {
+        const response = await fetch("http://localhost:8080/orders", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify(order),
         });
-        if (!res.ok) {
-          throw new Error(`Failed to submit order for ${order.product}`);
+        if (!response.ok) {
+          throw new Error("Failed to submit order for " + order.product);
         }
       }
       alert("Order submitted successfully!");
       clearCart();
-    } catch (err) {
-      console.error("Error submitting orders:", err);
+    } catch (error) {
+      console.error("Error submitting orders:", error);
       alert("There was an error submitting your order.");
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   };
 
   return (
     <div className={`cart-drawer ${isOpen ? "open" : ""}`}>
-      <button className="close-button" onClick={onClose}>&times;</button>
+      <button className="close-button" onClick={onClose}>
+        &times;
+      </button>
       <h2>Your Cart</h2>
-
       {cartItems.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
@@ -51,40 +50,21 @@ const CartDrawer = ({
               <div className="cart-item-info">
                 <span className="cart-item-product">{item.product}</span>
                 <span className="cart-item-price">${item.price}</span>
-                {/* Quantity controls */}
-                <div className="cart-item-quantity-controls">
-                  <button
-                    onClick={() =>
-                      updateItemQuantity(index, item.quantity - 1)
-                    }
-                    disabled={item.quantity <= 1}
-                    aria-label="Decrease quantity"
-                  >–</button>
-                  <span className="cart-item-quantity">{item.quantity}</span>
-                  <button
-                    onClick={() =>
-                      updateItemQuantity(index, item.quantity + 1)
-                    }
-                    aria-label="Increase quantity"
-                  >+</button>
-                </div>
+                <span className="cart-item-quantity">Qty: {item.quantity}</span>
               </div>
               <button
                 className="remove-item-button"
                 onClick={() => removeItemFromCart(index)}
                 aria-label="Remove item"
-              >&times;</button>
+              >
+                &times;
+              </button>
             </li>
           ))}
         </ul>
       )}
-
       {cartItems.length > 0 && (
-        <button
-          className="submit-button"
-          onClick={submitOrders}
-          disabled={submitting}
-        >
+        <button className="submit-button" onClick={submitOrders} disabled={submitting}>
           {submitting ? "Submitting..." : "Submit Order"}
         </button>
       )}
