@@ -76,28 +76,6 @@ services:
       kafka_network:
         aliases: [ kafka3 ]
 
-  # === Build‑based JMX‑HTTP sidecars ===
-  kafka1-jmx:
-    build:
-      context: ./config
-      dockerfile: Dockerfile.jmx
-    network_mode: "service:kafka1"
-    depends_on: [ kafka1 ]
-
-  kafka2-jmx:
-    build:
-      context: ./config
-      dockerfile: Dockerfile.jmx
-    network_mode: "service:kafka2"
-    depends_on: [ kafka2 ]
-
-  kafka3-jmx:
-    build:
-      context: ./config
-      dockerfile: Dockerfile.jmx
-    network_mode: "service:kafka3"
-    depends_on: [ kafka3 ]
-
   # === Your existing services ===
   orders-api:
     build:
