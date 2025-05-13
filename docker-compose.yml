@@ -1,4 +1,5 @@
 version: "3.8"
+
 services:
   # === Kafka brokers with JMX enabled ===
   kafka1:
@@ -76,24 +77,29 @@ services:
       kafka_network:
         aliases: [ kafka3 ]
 
-  # === Your existing services ===
+  # === Orders API ===
   orders-api:
     build:
       context: ./api/orders/orders-api
       dockerfile: src/main/docker/Dockerfile.jvm
-    ports: [ "8080:8080" ]
+    ports:
+      - "8080:8080"
     environment:
       - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
-    networks: [ kafka_network, default ]
+    networks:
+      - kafka_network
+      - default
 
+  # === Notification Service ===
   notification-service:
     build:
-      context: ./api/notifications/notification-service
+      context: ./api/notificatons/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
+      args:
+        MAVEN_CLI_OPTS: "-DskipTests"
     ports:
-      - "8083:8080"               # maps container’s 8080 → host 8083
+      - "8083:8080"
     environment:
-      # if it talks to Kafka or other services, add any needed env-vars here
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     depends_on:
       - kafka1
@@ -103,55 +109,93 @@ services:
       - kafka_network
       - default
 
+    # === Inventory Service ===
+  inventory-service:
+    build:
+      context: ./api/inventorys/inventory-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+      args:
+        MAVEN_CLI_OPTS: "-DskipTests"
+    ports:
+      - "8084:8080"                        # host 8084 → container 8080
+    environment:
+      - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka_network
+      - default
 
+  # === Frontend ===
   frontend:
-    build: ./frontend
-    ports: [ "3002:80" ]
-    depends_on: [ orders-api ]
-    networks: [ default, kafka_network ]
+    build:
+      context: ./frontend
+    ports:
+      - "3002:80"
+    depends_on:
+      - orders-api
+    networks:
+      - default
+      - kafka_network
 
+  # === Kafka-UI ===
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
-    ports: [ "8081:8080" ]
+    ports:
+      - "8081:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=KafkaKraftCluster
       - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
-    depends_on: [ kafka1, kafka2, kafka3 ]
-    networks: [ kafka_network, default ]
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - kafka_network
+      - default
 
-  # === Prometheus with persistent data ===
+  # === Prometheus ===
   prometheus:
     image: prom/prometheus:latest
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    ports: [ "9090:9090" ]
-    networks: [ default ]
+    ports:
+      - "9090:9090"
+    networks:
+      - default
 
-  # === Grafana with provisioning & persistent data ===
+  # === Grafana ===
   grafana:
     image: grafana/grafana:latest
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-    ports: [ "3000:3000" ]
-    depends_on: [ prometheus ]
-    networks: [ default ]
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - default
 
-  # === Container monitoring ===
+  # === cAdvisor ===
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     platform: linux/amd64
-    ports: [ "8082:8080" ]
+    ports:
+      - "8082:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /:/rootfs:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    networks: [ default ]
+    networks:
+      - default
 
 volumes:
   kafka1_data:
