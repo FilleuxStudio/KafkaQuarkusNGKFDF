@@ -1,9 +1,0 @@
-startDelaySeconds: 0
-lowercaseOutputName: true
-lowercaseOutputLabelNames: true
-rules:
-  - pattern: "kafka.server<type=(.+), name=(.+)><>Value"
-    name: kafka_$1_$2
-    labels:
-      instance: "kafka"
-    help: "Metric $1_$2"

@@ -7,17 +7,10 @@ scrape_configs:
     static_configs:
       - targets: ['orders-api:8080']
 
-  - job_name: 'kafka1-jmx'
+  - job_name: 'notification-service'
+    metrics_path: '/q/metrics'
     static_configs:
-      - targets: ['kafka1-jmx:5556']
-
-  - job_name: 'kafka2-jmx'
-    static_configs:
-      - targets: ['kafka2-jmx:5556']
-
-  - job_name: 'kafka3-jmx'
-    static_configs:
-      - targets: ['kafka3-jmx:5556']
+      - targets: ['notification-service:8080']
 
   - job_name: 'cadvisor'
     static_configs:
