@@ -78,17 +78,28 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
+# Stage 1: Build the Quarkus application using Maven
+FROM maven:3.9.2-openjdk-17 AS builder
+WORKDIR /workspace
+# Copy Maven files first for caching
+COPY pom.xml .
+COPY mvnw .
+COPY mvnw.cmd .
+# Copy the entire project
+COPY . .
+# Build the application (skip tests for development)
+RUN ./mvnw clean package -DskipTests
+
 FROM registry.access.redhat.com/ubi9/openjdk-21:1.21
-
-ENV LANGUAGE='en_US:en'
-
-
-COPY target/lib/* /deployments/lib/
-COPY target/*-runner.jar /deployments/quarkus-run.jar
-
+WORKDIR /deployments
+# Copy built artifacts from the builder stage; these paths are produced by Quarkus when the project is built
+COPY --chown=185 /workspace/target/quarkus-app/lib/ lib/
+COPY --chown=185 /workspace/target/quarkus-app/*.jar /deployments/
+COPY --chown=185 /workspace/target/quarkus-app/app/ app/
+COPY --chown=185 /workspace/target/quarkus-app/quarkus/ quarkus/
 EXPOSE 8080
 USER 185
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
-
 ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]
+
