@@ -88,11 +88,8 @@ services:
 
   notification-service:
     build:
-      context: ./api/notificatons/notification-service
+      context: ./api/notifications/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
-      args:
-        # so you don’t have to rebuild tests every time
-        MAVEN_CLI_OPTS: "-DskipTests"
     ports:
       - "8083:8080"               # maps container’s 8080 → host 8083
     environment:
