@@ -43,3 +43,7 @@ nb-configuration.xml
 /.quarkus/cli/plugins/
 # TLS Certificates
 .certs/
+
+/src/main/resources/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json
+
+src/main/java/com/example/inventory/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json
