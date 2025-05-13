@@ -7,7 +7,12 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import io.smallrye.common.annotation.Blocking;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.jboss.logging.Logger;
+
+
 
 @ApplicationScoped
 public class NotificationProcessor {
@@ -15,6 +20,9 @@ public class NotificationProcessor {
 
     @Inject
     FirestoreService firestoreService;
+
+    @Inject
+    ObjectMapper objectMapper;
 
     @Inject
     @Channel("sse-notifications")
@@ -39,15 +47,15 @@ public class NotificationProcessor {
             // Stockage Firestore via le service
             String id = firestoreService.save(entity);
 
-            // Construction du JSON SSE (incluant l'ID)
-            String json = String.format(
-                "{\"id\":\"%s\",\"type\":\"%s\",\"payload\":\"%s\",\"timestamp\":%d}",
-                id, type, payload, entity.timestamp
-            );
-            // Envoi sur le canal SSE
-            emitter.send(json);
+            // Création d’un JSON sûr avec Jackson
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("id", id);
+        json.put("type", type);
+        json.put("payload", payload);
+        json.put("timestamp", entity.timestamp);
 
-            LOG.debugf("Emitted SSE: %s", json);
+        emitter.send(json.toString());
+        LOG.debugf("Emitted SSE: %s", json.toString());
         } catch (Exception ex) {
             LOG.error("Failed to process message", ex);
         }

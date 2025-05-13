@@ -13,17 +13,17 @@ Une architecture microservices pour une plateforme e-commerce utilisant **Quarku
 
 ```mermaid
 graph TD
-  A[Frontend] -->|Passer commande| B[Order Service]
-  B -->|Événement order-created| C[topic-orders]
-  C --> D[Inventory Service]
-  D -->|Mise à jour stock| E[topic-inventory]
-  D -->|Alerte stock bas| F[topic-notifications]
-  F --> G[Notification Service]
-  B --> H[(PostgreSQL)]
-  D --> I[(MongoDB)]
-  G --> J[(MySQL)]
-  E --> K[Prometheus]
-  K --> L[Grafana]
+  A[Frontend (React + Vite)] -->|Passer commande| B[Order Service (Quarkus)]
+  B -->|Produire topic "order-created"| C[Kafka (topic-orders)]
+  C -->|Consommer message et vérifier stock| D[Inventory Service (Quarkus)]
+  D -->|Réponse quantités dispo/vide| E[Kafka (topic-inventory)]
+  D -->|Alerte stock bas| F[Kafka (topic-notifications)]
+  F -->|Consommer message| G[Notification Service (Quarkus)]
+  B -->|Stocker message| H[Firebase (Order)]
+  D -->|Stocker message| I[Firebase (Inventory)]
+  G -->|Stocker message| J[Firebase (Notification)]
+  E --> N[Prometheus]
+  N --> O[Grafana]
 ```
 
 ---
@@ -87,7 +87,7 @@ public void sendAlert(String alert) {
 
 ### Prérequis
 - Docker 24+
-- JDK 17+
+- JDK 21 LTS+
 - Maven 3.9+
 
 ### 1. Cloner le dépôt

@@ -43,3 +43,8 @@ nb-configuration.xml
 /.quarkus/cli/plugins/
 # TLS Certificates
 .certs/
+
+# Firebase Service Account Key
+credentials/*
+
+src/main/resources/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json

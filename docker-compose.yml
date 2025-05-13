@@ -1,5 +1,6 @@
 version: "3.8"
 
+
 services:
   # === Kafka brokers with JMX enabled ===
   kafka1:
@@ -90,17 +91,18 @@ services:
       - kafka_network
       - default
 
-  # === Notification Service ===
+ # === Notification Service ===
   notification-service:
     build:
-      context: ./api/notificatons/notification-service
+      context: ./api/notifications/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
-      args:
-        MAVEN_CLI_OPTS: "-DskipTests"
+    volumes:
+      - ./api/notifications/notification-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
+      - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     ports:
       - "8083:8080"
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     depends_on:
       - kafka1
       - kafka2

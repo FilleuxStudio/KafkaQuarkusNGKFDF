@@ -89,6 +89,13 @@ COPY --chown=185 target/quarkus-app/*.jar /deployments/
 COPY --chown=185 target/quarkus-app/app/ /deployments/app/
 COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
 
+# Copy the Firestore credentials into the image using the correct relative path:
+# (Since the Dockerfile is in orders-api/src/main/docker, and the credentials folder is in orders-api/)
+#COPY --chown=185 /credentials/kafka-ccm-dev.json /deployments/credentials.json
+
+# Set GOOGLE_APPLICATION_CREDENTIALS so Google APIs can pick up your credentials file
+ENV GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
+
 EXPOSE 8080
 USER 185
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
