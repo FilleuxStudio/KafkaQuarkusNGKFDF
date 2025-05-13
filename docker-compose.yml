@@ -1,4 +1,5 @@
-version: "3.9"
+version: "3.8"
+
 
 services:
   # === Kafka brokers with JMX enabled ===
@@ -77,8 +78,20 @@ services:
       kafka_network:
         aliases: [ kafka3 ]
 
+  # === Orders API ===
+  orders-api:
+    build:
+      context: ./api/orders/orders-api
+      dockerfile: src/main/docker/Dockerfile.jvm
+    ports:
+      - "8080:8080"
+    environment:
+      - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+    networks:
+      - kafka_network
+      - default
 
-  # === Notification Service ===
+ # === Notification Service ===
   notification-service:
     build:
       context: ./api/notifications/notification-service
@@ -97,21 +110,6 @@ services:
     networks:
       - kafka_network
       - default
-
-  # === Orders API ===
-  orders-api:
-    build:
-      context: ./api/orders/orders-api
-      dockerfile: src/main/docker/Dockerfile.jvm
-    ports:
-      - "8080:8080"
-    environment:
-      - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
-    networks:
-      - kafka_network
-      - default
-
-
 
     # === Inventory Service ===
   inventory-service:
