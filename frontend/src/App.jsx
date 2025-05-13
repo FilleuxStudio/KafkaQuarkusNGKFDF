@@ -36,6 +36,16 @@ function App() {
     setCart([]);
   };
 
+  const updateItemQuantity = (index, newQuantity) => {
+     setCart(prev =>
+       prev.map((item, i) =>
+         i === index
+           ? { ...item, quantity: Math.max(1, newQuantity) }
+           : item
+      )
+     );
+   };
+
   const urlBase64ToUint8Array = (base64String) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding)
@@ -104,6 +114,7 @@ function App() {
         cartItems={cart}
         clearCart={clearCart}
         removeItemFromCart={removeItemFromCart}
+        updateItemQuantity={updateItemQuantity}
       />
       <Toast message={toastMessage} />
       <div>
