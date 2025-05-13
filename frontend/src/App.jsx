@@ -6,6 +6,8 @@ import ProductList from "./ProductList";
 import CartDrawer from "./CartDrawer";
 import Toast from "./Toast";
 import NotificationComponent from './NotificationComponent';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
 
 function App() {
@@ -123,6 +125,8 @@ function App() {
             {isSubscribed ? "Déjà inscrit" : "S'inscrire aux notifications"}
         </button>
     </div>
+<NotificationComponent />
+<ToastContainer />
     </div>
   );
 }
