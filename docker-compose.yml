@@ -86,7 +86,7 @@ services:
       - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
     networks: [ kafka_network, default ]
 
-    notification-service:
+  notification-service:
     build:
       context: ./api/notificatons/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
@@ -94,7 +94,7 @@ services:
         # so you don’t have to rebuild tests every time
         MAVEN_CLI_OPTS: "-DskipTests"
     ports:
-      - "8081:8080"               # maps container’s 8080 → host 8081
+      - "8083:8080"               # maps container’s 8080 → host 8083
     environment:
       # if it talks to Kafka or other services, add any needed env-vars here
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
