@@ -1,0 +1,22 @@
+<!-- src/main/resources/META-INF/resources/index.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Notification Service</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f5f5f5; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    p { color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Service de Notifications</h1>
+    <p>🟢 Le service est en ligne ! 🎉</p>
+    <p>Consomme les topics Kafka <code>orders</code> et <code>inventory</code>, stocke dans Firestore et diffuse en SSE.</p>
+    <p>Pour tester votre flux SSE, ouvrez : <a href="/notifications/stream">/notifications/stream</a></p>
+  </div>
+</body>
+</html>
