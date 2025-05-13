@@ -1,10 +1,11 @@
-// src/App.jsx
+// App.jsx
 import React, { useState } from "react";
 import Header from "./Header";
 import Hero from "./Hero";
 import ProductList from "./ProductList";
 import CartDrawer from "./CartDrawer";
 import Toast from "./Toast";
+import NotificationComponent from './NotificationComponent';
 import "./App.css";
 
 function App() {
@@ -13,32 +14,27 @@ function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Add to cart (initial quantity = 1)
   const addToCart = (order) => {
-    setCart((prev) => [...prev, { ...order, quantity: 1 }]);
+    setCart((prevCart) => [...prevCart, order]);
     setToastMessage(`${order.product} added to cart!`);
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // Remove an item entirely
   const removeItemFromCart = (index) => {
-    setCart((prev) => prev.filter((_, i) => i !== index));
+    setCart((prevCart) => prevCart.filter((_, i) => i !== index));
   };
 
-  // **NEW**: update just the quantity for a given index
-  const updateItemQuantity = (index, quantity) => {
-    setCart((prev) =>
-      prev.map((item, i) =>
-        i === index
-          ? { ...item, quantity: Math.max(1, quantity) }
-          : item
-      )
-    );
+  const openCart = () => {
+    setIsCartOpen(true);
   };
 
-  const openCart = () => setIsCartOpen(true);
-  const closeCart = () => setIsCartOpen(false);
-  const clearCart = () => setCart([]);
+  const closeCart = () => {
+    setIsCartOpen(false);
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
 
   const urlBase64ToUint8Array = (base64String) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -97,23 +93,27 @@ function App() {
     }
 };
 
-return (
-  <div className="app-container">
-    <Header onCartClick={openCart} />
-    <Hero />
-    <ProductList onAddToCart={addToCart} />
-    <CartDrawer
-      isOpen={isCartOpen}
-      onClose={closeCart}
-      cartItems={cart}
-      clearCart={clearCart}
-      removeItemFromCart={removeItemFromCart}
-      updateItemQuantity={updateItemQuantity}  // pass it in
-    />
-    <Toast message={toastMessage} />
-    {/* ... notifications UI ... */}
-  </div>
-);
+  return (
+    <div className="app-container">
+      <Header onCartClick={openCart} />
+      <Hero />
+      <ProductList onAddToCart={addToCart} />
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={closeCart}
+        cartItems={cart}
+        clearCart={clearCart}
+        removeItemFromCart={removeItemFromCart}
+      />
+      <Toast message={toastMessage} />
+      <div>
+        <h1>Notifications Push avec Quarkus</h1>
+        <button onClick={subscribeToNotifications} disabled={isSubscribed}>
+            {isSubscribed ? "Déjà inscrit" : "S'inscrire aux notifications"}
+        </button>
+    </div>
+    </div>
+  );
 }
 
 export default App;
