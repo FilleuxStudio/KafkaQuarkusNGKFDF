@@ -17,7 +17,7 @@ resource "google_compute_firewall" "allow-all-ports" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "3000", "3002" "8080-9099"]  # adjust to your Docker ports
+    ports    = ["80", "443", "3000", "3002", "8080-9099"]  # adjust to your Docker ports
   }
 
   source_ranges = ["0.0.0.0/0"]
