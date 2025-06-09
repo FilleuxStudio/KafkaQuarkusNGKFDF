@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 export default function NotificationComponent() {
+  const NOTIF_BASE = import.meta.env.VITE_NOTIF_BASE;
   useEffect(() => {
-    const evtSource = new EventSource('http://localhost:8083/notifications/stream');
+    const evtSource = new EventSource(`${NOTIF_BASE}/notifications/stream`);
 
     evtSource.onmessage = (e) => {
       try {

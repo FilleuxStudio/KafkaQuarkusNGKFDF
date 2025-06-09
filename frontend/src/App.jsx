@@ -10,6 +10,9 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
 
+const API_BASE    = import.meta.env.VITE_API_BASE;
+const NOTIF_BASE  = import.meta.env.VITE_NOTIF_BASE;
+
 function App() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -91,7 +94,7 @@ function App() {
 
     console.log("Subscription :", JSON.stringify(subscription));
 
-    const response = await fetch("http://localhost:8080/notifications/subscribe/123", {
+    const response = await fetch(`${NOTIF_BASE}/notifications/subscribe/123`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription),

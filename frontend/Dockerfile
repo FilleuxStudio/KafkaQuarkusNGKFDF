@@ -9,8 +9,9 @@ RUN npm ci
 # Copy the rest of the source code
 COPY . .
 
-# Build the app (assumes "build" script is defined in package.json)
-RUN npm run build
+# Ensure we build with production mode so that .env.production is loaded
+ENV NODE_ENV=production
+RUN npm run build -- --mode production
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
