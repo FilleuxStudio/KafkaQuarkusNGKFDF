@@ -1,8 +1,10 @@
 // App.jsx
 import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./Header";
 import Hero from "./Hero";
 import ProductList from "./ProductList";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 import CartDrawer from "./CartDrawer";
 import Toast from "./Toast";
 import NotificationComponent from './NotificationComponent';
@@ -59,7 +61,7 @@ function App() {
 
     const rawData = window.atob(base64);
     return new Uint8Array([...rawData].map((char) => char.charCodeAt(0)));
-};
+  };
 
   const subscribeToNotifications = async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -106,31 +108,56 @@ function App() {
     } else {
         alert("Erreur lors de l'inscription.");
     }
-};
+  };
 
   return (
-    <div className="app-container">
-      <Header onCartClick={openCart} />
-      <Hero />
-      <ProductList onAddToCart={addToCart} />
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={closeCart}
-        cartItems={cart}
-        clearCart={clearCart}
-        removeItemFromCart={removeItemFromCart}
-        updateItemQuantity={updateItemQuantity}
-      />
-      <Toast message={toastMessage} />
-      <div>
-        <h1>Notifications Push avec Quarkus</h1>
-        <button onClick={subscribeToNotifications} disabled={isSubscribed}>
-            {isSubscribed ? "Déjà inscrit" : "S'inscrire aux notifications"}
-        </button>
-    </div>
-<NotificationComponent />
-<ToastContainer />
-    </div>
+    <Router>
+      <div className="app-container">
+        <Header onCartClick={openCart} />
+        
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              <>
+                <Hero />
+                <section className="product-section">
+                  <h2 className="section-title">Featured Products</h2>
+                  <ProductList onAddToCart={addToCart} />
+                </section>
+                
+                {/* PRESERVED: All your notification functionality */}
+                <div>
+                  <h1>Notifications Push avec Quarkus</h1>
+                  <button onClick={subscribeToNotifications} disabled={isSubscribed}>
+                      {isSubscribed ? "Déjà inscrit" : "S'inscrire aux notifications"}
+                  </button>
+                </div>
+                <NotificationComponent />
+              </>
+            } 
+          />
+          <Route 
+            path="/analytics" 
+            element={<AnalyticsDashboard />} 
+          />
+        </Routes>
+
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={closeCart}
+          cartItems={cart}
+          clearCart={clearCart}
+          removeItemFromCart={removeItemFromCart}
+          updateItemQuantity={updateItemQuantity}
+        />
+        
+        <Toast message={toastMessage} />
+        
+        {/* PRESERVED: Toast notifications */}
+        <ToastContainer />
+      </div>
+    </Router>
   );
 }
 

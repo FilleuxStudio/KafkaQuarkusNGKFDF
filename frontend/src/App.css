@@ -1,127 +1,406 @@
-.app-container {
-  background-color: #121212;
-  color: #ffffff;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  display: flex;
-  flex-direction: column;
+/* Apple-Inspired Design System */
+:root {
+  --apple-silver: #e6e6e6;
+  --apple-gray: #424245;
+  --apple-white: #f5f5f7;
+  --apple-blue: #0066cc;
+  --apple-orange: #f56300;
+  --apple-black: #1d1d1f;
+  --apple-text-gray: #86868b;
+  --apple-border: rgba(255, 255, 255, 0.1);
+  --apple-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --apple-shadow-dark: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Header */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+  background: linear-gradient(135deg, var(--apple-white) 0%, #ffffff 100%);
+  color: var(--apple-black);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Premium Header */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(251, 251, 253, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #000000;
+  padding: 0.75rem 2rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.header:hover {
+  background: rgba(251, 251, 253, 0.98);
 }
 
 .logo {
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, var(--apple-black) 0%, var(--apple-gray) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.02);
+}
+
+.nav {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
 }
 
 .nav a {
-  color: #fff;
-  margin-left: 1.5rem;
+  color: var(--apple-black);
   text-decoration: none;
   font-weight: 500;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  letter-spacing: -0.01em;
 }
 
 .nav a:hover {
-  opacity: 0.7;
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--apple-blue);
+  transform: translateY(-1px);
 }
 
-/* Hero */
+.nav a.active {
+  background: var(--apple-blue);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+}
+
+/* Hero Section - Apple Style */
 .hero {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.9) 0%, 
+    rgba(29, 29, 31, 0.95) 50%, 
+    rgba(66, 66, 69, 0.9) 100%),
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23000000" stop-opacity="0.1"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23a)"/></svg>');
+  background-size: cover;
+  background-position: center;
+  padding: 8rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(45deg, #000000, #333333);
-  padding: 4rem 2rem;
-  text-align: center;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-content {
+  max-width: 800px;
+  z-index: 2;
+  position: relative;
 }
 
 .hero-content h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, var(--apple-silver) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .hero-content p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  margin-bottom: 3rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
 }
 
 .hero-button {
-  background-color: #ffffff;
-  color: #000000;
+  background: linear-gradient(135deg, var(--apple-blue) 0%, #0052a3 100%);
+  color: white;
   border: none;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
+  border-radius: 50px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 8px 30px rgba(0, 102, 204, 0.3);
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.hero-button:hover::before {
+  left: 100%;
 }
 
 .hero-button:hover {
-  opacity: 0.8;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 102, 204, 0.4);
+}
+
+.hero-button:active {
+  transform: translateY(0) scale(1);
 }
 
 /* Product Section */
 .product-section {
-  padding: 2rem;
+  padding: 6rem 2rem;
+  background: var(--apple-white);
+  position: relative;
 }
 
 .section-title {
   text-align: center;
-  font-size: 2rem;
-  margin-bottom: 2rem;
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 4rem;
+  color: var(--apple-black);
+  letter-spacing: -0.03em;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-orange) 100%);
+  border-radius: 2px;
 }
 
 .product-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-/* Product Card */
+/* Premium Product Cards */
 .product-card {
-  background-color: #1e1e1e;
-  border-radius: 8px;
-  padding: 1.5rem;
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
   text-align: center;
-  transition: transform 0.3s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.product-card:hover::before {
+  opacity: 1;
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-color: rgba(0, 102, 204, 0.2);
 }
 
 .product-image {
   width: 100%;
-  height: auto;
-  margin-bottom: 1rem;
+  height: 250px;
+  object-fit: cover;
+  object-position: center;
+  margin-bottom: 1.5rem;
+  border-radius: 16px;
+  transition: all 0.4s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.product-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--apple-black);
+  letter-spacing: -0.02em;
 }
 
 .product-price {
-  margin: 0.5rem 0;
+  font-size: 1.25rem;
   font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--apple-blue);
+  letter-spacing: -0.01em;
 }
 
 .add-to-cart-button {
-  background-color: #0070c9;
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--apple-black) 0%, var(--apple-gray) 100%);
+  color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 50px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.add-to-cart-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.add-to-cart-button:hover::before {
+  left: 100%;
 }
 
 .add-to-cart-button:hover {
-  background-color: #005999;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, var(--apple-blue) 0%, #0052a3 100%);
+}
+
+.add-to-cart-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .nav {
+    gap: 1rem;
+  }
+  
+  .nav a {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .hero {
+    padding: 4rem 1rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-content p {
+    font-size: 1.2rem;
+  }
+  
+  .product-section {
+    padding: 4rem 1rem;
+  }
+  
+  .section-title {
+    font-size: 2.5rem;
+  }
+  
+  .product-list {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--apple-white);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--apple-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--apple-black);
 }

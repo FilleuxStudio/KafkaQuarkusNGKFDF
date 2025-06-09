@@ -5,8 +5,10 @@ import jakarta.enterprise.inject.Produces;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.KeyValue;  // ADD THIS IMPORT
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.WindowStore;
+import org.apache.kafka.common.utils.Bytes;
 import io.quarkus.kafka.client.serialization.ObjectMapperSerde;
 import org.jboss.logging.Logger;
 import java.time.Duration;
@@ -29,11 +31,13 @@ public class OrderAnalyticsTopology {
         orders.foreach((key, order) -> 
             LOG.infof("Processing order: %s for product: %s", order.getId(), order.getProduct()));
 
-        // Product Order Count Analytics (5-minute windows)
+        // Product Order Count Analytics (5-minute windows) with materialized state store
         orders
             .groupBy((key, order) -> order.getProduct())
             .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
-            .count()
+            .count(Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("product-order-counts")
+                .withKeySerde(Serdes.String())
+                .withValueSerde(Serdes.Long()))
             .toStream()
             .map((windowedKey, count) -> {
                 String product = windowedKey.key();
@@ -50,14 +54,16 @@ public class OrderAnalyticsTopology {
             })
             .to("order-analytics", Produced.with(Serdes.String(), analyticsSerde));
 
-        // Revenue Analytics (5-minute windows)
+        // Revenue Analytics (5-minute windows) with materialized state store
         orders
             .groupBy((key, order) -> order.getProduct())
             .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
             .aggregate(
                 () -> 0.0,
                 (key, order, aggregate) -> aggregate + order.getTotalPrice(),
-                Materialized.with(Serdes.String(), Serdes.Double())
+                Materialized.<String, Double, WindowStore<Bytes, byte[]>>as("product-revenue-analytics")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.Double())
             )
             .toStream()
             .map((windowedKey, totalRevenue) -> {
