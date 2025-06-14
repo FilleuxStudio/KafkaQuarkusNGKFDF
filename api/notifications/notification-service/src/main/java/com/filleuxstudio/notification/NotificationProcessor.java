@@ -81,6 +81,8 @@ package com.filleuxstudio.notification;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -119,6 +121,13 @@ public class NotificationProcessor {
         process("inventory", payload);
     }
 
+    @GET
+    @Path("/sse")
+    public String testSse() {
+        emitter.send("{\"test\": \"OK\"}");
+        return "SSE test message sent";
+    }
+
     private void process(String type, String payload) {
         try {
             // Création de l'entité
@@ -151,19 +160,4 @@ public class NotificationProcessor {
             LOG.errorv(ex, "Failed to process {0} message: {1}", type, payload);
         }
     }
-
-    /*public static class NotificationEntity {
-        public String type;
-        public String payload;
-        public long timestamp;
-
-        // Constructeur par défaut requis par Firestore
-        public NotificationEntity() {}
-
-        public NotificationEntity(String type, String payload, long timestamp) {
-            this.type = type;
-            this.payload = payload;
-            this.timestamp = timestamp;
-        }
-    }*/
 }
