@@ -122,7 +122,7 @@ public class NotificationProcessor {
     private void process(String type, String payload) {
         try {
             // Création de l'entité
-            NotificationEntity entity = new NotificationEntity(type, payload, System.currentTimeMillis());
+                   NotificationEntity entity = new NotificationEntity(type, payload, System.currentTimeMillis());
             
             // Stockage Firestore via le service
             String id = null;
@@ -140,7 +140,7 @@ public class NotificationProcessor {
             json.put("id", id);
             json.put("type", type);
             json.put("payload", payload);
-            json.put("timestamp", entity.timestamp);
+            json.put("timestamp", entity.getTimestamp());
 
             // Émission SSE
             String jsonString = json.toString();
@@ -152,7 +152,7 @@ public class NotificationProcessor {
         }
     }
 
-    public static class NotificationEntity {
+    /*public static class NotificationEntity {
         public String type;
         public String payload;
         public long timestamp;
@@ -165,5 +165,5 @@ public class NotificationProcessor {
             this.payload = payload;
             this.timestamp = timestamp;
         }
-    }
+    }*/
 }
