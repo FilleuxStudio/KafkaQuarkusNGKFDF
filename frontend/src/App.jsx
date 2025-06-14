@@ -122,7 +122,6 @@ function App() {
               <>
                 <Hero />
                 <section className="product-section">
-                  <h2 className="section-title">Featured Products</h2>
                   <ProductList onAddToCart={addToCart} />
                 </section>
                 
