@@ -85,8 +85,6 @@ services:
       dockerfile: src/main/docker/Dockerfile.jvm
     ports:
       - "8080:8080"
-    volumes:
-      - ./api/orders/orders-api/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
     environment:
       - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
       - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
@@ -127,7 +125,7 @@ services:
       - ./api/inventorys/inventory-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
-      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials/kafka-ccm-dev.json
       - QUARKUS_HTTP_HOST=0.0.0.0
       - QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4317
       - QUARKUS_OTEL_SERVICE_NAME=inventory-service

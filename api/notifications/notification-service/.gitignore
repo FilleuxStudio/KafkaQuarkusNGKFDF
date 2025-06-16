@@ -47,7 +47,4 @@ nb-configuration.xml
 # Firebase Service Account Key
 credentials/*
 
-# Exclude credentials folder (and its contents) from git
-/credentials/
-
 src/main/resources/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json

@@ -45,4 +45,4 @@ nb-configuration.xml
 .certs/
 
 # Firebase Service Account Key
-/credentials/
+credentials/*

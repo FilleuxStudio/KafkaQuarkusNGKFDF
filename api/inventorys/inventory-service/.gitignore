@@ -3,7 +3,12 @@ target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
+pom.xml.next
 release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 .flattened-pom.xml
 
 # Eclipse
@@ -46,7 +51,10 @@ nb-configuration.xml
 
 # Exclude credentials folder (and its contents) from git
 /credentials/
+**/credentials/
+**/credentials/*.json
 
+# Exclude kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json from git
 /src/main/resources/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json
 
 src/main/java/com/example/inventory/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json
