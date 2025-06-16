@@ -1,0 +1,89 @@
+* [33m5a35251[m[33m ([m[1;36mHEAD -> [m[1;32minventory2_clean[m[33m, [m[1;31morigin/inventory2_clean[m[33m)[m Merge avec main
+* [33mcba6e19[m[33m ([m[1;31morigin/inventory2[m[33m)[m reset: restauration complète du projet sans historique ni credentials
+*   [33mfdf4e14[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #6 from FilleuxStudio/notification
+[32m|[m[33m\[m  
+[32m|[m * [33m7ec8c95[m debug ok firebase ok, message kafka ok
+[32m|[m * [33m64847b0[m correction firebase
+[32m|[m [33m|[m * [33me6f1def[m[33m ([m[1;32mrecup-e6f1def[m[33m)[m restore: récupération complète des modifications frontend et inventory
+[32m|[m [33m|[m[32m/[m  
+[32m|[m[32m/[m[33m|[m   
+* [33m|[m [33m03e4f58[m[33m ([m[1;32mrecup-initial[m[33m, [m[1;32mrecup-03e4f58[m[33m, [m[1;32mmain[m[33m)[m Merge pull request #5 from FilleuxStudio/notification
+[35m|[m[33m\[m[33m|[m 
+[35m|[m * [33m6392a1d[m[33m ([m[1;31morigin/notification[m[33m)[m update
+[35m|[m[35m/[m  
+* [33me99d97b[m small design fix, duplicate featured products section removed
+* [33mfb4cafa[m new frontend
+* [33mb4ea7d0[m added analytics api to show kafka streams
+* [33md0e7bd8[m added jaeger, removed old unused api, troubleshooting
+* [33m81be3c6[m opened jaeger port on the vm
+* [33mabdcf11[m small terraform typo fix
+*   [33mdf9f6f8[m Merge pull request #4 from FilleuxStudio/notification
+[1;31m|[m[1;32m\[m  
+[1;31m|[m *   [33m8944dc4[m Merge branch 'main' into notification
+[1;31m|[m [1;33m|[m[1;31m\[m  
+[1;31m|[m [1;33m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;33m|[m   
+* [1;33m|[m [33m0be48e3[m Adding inventory service
+* [1;33m|[m [33m547002a[m Adding inventory service
+* [1;33m|[m   [33m55d598b[m Merge pull request #3 from FilleuxStudio/notification
+[1;35m|[m[1;36m\[m [1;33m\[m  
+* [1;36m|[m [1;33m|[m [33mbdd1d83[m adding notification service to docker-compose and doing the monitoring
+* [1;36m|[m [1;33m|[m [33m4f7f2df[m Merge inventory
+* [1;36m|[m [1;33m|[m   [33m6704c00[m Merge pull request #2 from FilleuxStudio/notification
+[31m|[m[32m\[m [1;36m\[m [1;33m\[m  
+* [32m|[m [1;36m|[m [1;33m|[m [33m68bc8d2[m troubelshooting
+[32m|[m [32m|[m [1;36m|[m * [33m74a062c[m merge
+[32m|[m [32m|[m [1;36m|[m * [33m0fc8e56[m merge
+[32m|[m [32m|[m [1;36m|[m * [33m8e60fd7[m merge
+[32m|[m [32m|[m [1;36m|[m[1;36m/[m  
+[32m|[m [32m|[m * [33m0881386[m merge
+[32m|[m [32m|[m * [33m851e2b5[m update service 2
+[32m|[m [32m|[m * [33m6f6f2e5[m notification frontend
+[32m|[m [32m|[m[32m/[m  
+[32m|[m * [33mcd79748[m micro-service notification
+[32m|[m * [33m96f27f3[m merge
+[32m|[m * [33md765e61[m micro-service notification
+[32m|[m[32m/[m  
+* [33m4d6d16c[m troubleshooting
+*   [33mba06de6[m Merge pull request #1 from FilleuxStudio/notification
+[33m|[m[34m\[m  
+[33m|[m * [33m90e8f98[m merge v2 main sur notification
+[33m|[m[33m/[m  
+* [33mb156979[m deployed vm, monitoring working
+* [33mca3a67e[m added terraform to launch a gcp vm
+* [33m9b2e2dd[m Working on the monitoring
+* [33m65a5f07[m[33m ([m[1;31morigin/inventory[m[33m)[m now writing into kafka which runs on docker, timestamp is in the firebase again
+* [33m921a680[m Working on complete docker-compose file. dockerized my api. dockerized frontend
+[34m|[m * [33m7da7701[m[33m ([m[1;32m–D[m[33m, [m[1;32mrecup-7da7701[m[33m)[m chore: remove sensitive credentials from git history
+[34m|[m * [33mb3a5248[m[33m ([m[1;32mrecup-inventory[m[33m, [m[1;32mrecup-b3a5248[m[33m, [m[1;32minventory2[m[33m)[m implementation inventory + front gestion inventaire
+[34m|[m * [33mfdbbeb2[m[33m ([m[1;32mrecup-fdbbeb2[m[33m)[m Changement config
+[34m|[m * [33maa9c1e4[m W
+[34m|[m * [33mab24c84[m json
+[34m|[m * [33m2c8ee90[m Inventory premier commit
+[34m|[m[34m/[m  
+* [33m0195444[m notification
+* [33m31f6cfc[m c'est de la merde
+* [33mbd1bbc8[m n
+* [33m45ff8e6[m t
+* [33m85eec50[m Ajout du fichier firebase-config.json au .gitignore
+* [33m2320779[m notification
+*   [33mb5be66d[m Merge branch 'main' of github.com:FilleuxStudio/KafkaQuarkusNGKFDF
+[36m|[m[1;31m\[m  
+[36m|[m *   [33m9ea789b[m Merge branch 'main' of https://github.com/FilleuxStudio/KafkaQuarkusNGKFDF
+[36m|[m [1;32m|[m[1;33m\[m  
+[36m|[m * [1;33m|[m [33m8c05daa[m Created order microservice api, modified frontend to include a shopping cart and to use the api
+* [1;33m|[m [1;33m|[m [33mc641a7c[m API notification
+[1;33m|[m [1;33m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[1;33m|[m   
+* [1;33m|[m [33m8afd2f2[m docker
+[1;33m|[m[1;33m/[m  
+*   [33ma81016b[m Merge branch 'main' of https://github.com/FilleuxStudio/KafkaQuarkusNGKFDF
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m57aab17[m readme
+* [1;35m|[m [33mfa5dcc8[m Created base frontend
+[1;35m|[m[1;35m/[m  
+* [33m7227af9[m api
+* [33mb27decc[m initialized the frontend
+* [33m06d437d[m folder structure
+* [33m1465e98[m init-ini
+* [33m236d84f[m init

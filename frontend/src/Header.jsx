@@ -46,6 +46,18 @@ function Header({ onCartClick }) {
             Analytics
           </Link>
         </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Link 
+            to="/stock-management" 
+            className={location.pathname === '/stock-management' ? 'active' : ''}
+            style={{ textDecoration: 'none' }}
+          >
+            Gestion Stock
+          </Link>
+        </motion.div>
         <motion.a
           href="#"
           onClick={(e) => {
