@@ -11,6 +11,7 @@ import NotificationComponent from './NotificationComponent';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./App.css";
+import StockManagement from "./StockManagement";
 
 const API_BASE    = import.meta.env.VITE_API_BASE;
 const NOTIF_BASE  = import.meta.env.VITE_NOTIF_BASE;
@@ -19,6 +20,7 @@ function App() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const addToCart = (order) => {
     setCart((prevCart) => [...prevCart, order]);
@@ -63,6 +65,7 @@ function App() {
   };
 
 
+
   return (
     <Router>
       <div className="app-container">
@@ -77,15 +80,16 @@ function App() {
                 <section className="product-section">
                   <ProductList onAddToCart={addToCart} />
                 </section>
-                
-                {/* PRESERVED: All your notification functionality */}
-                <NotificationComponent />
               </>
             } 
           />
           <Route 
             path="/analytics" 
             element={<AnalyticsDashboard />} 
+          />
+          <Route
+            path="/stock-management"
+            element={<StockManagement />}
           />
         </Routes>
 
@@ -99,6 +103,7 @@ function App() {
         />
         
         <Toast message={toastMessage} />
+        
         {/* PRESERVED: Toast notifications */}
         <ToastContainer />
       </div>

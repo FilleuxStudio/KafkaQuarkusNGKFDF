@@ -10,8 +10,8 @@ RUN npm ci
 COPY . .
 
 # Ensure we build with production mode so that .env.production is loaded
-ENV NODE_ENV=production
-RUN npm run build -- --mode production
+ENV NODE_ENV=development
+RUN npm run build -- --mode development
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine

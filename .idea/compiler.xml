@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="inventory-service" target="21" />
+      <module name="notification-service" target="21" />
+      <module name="order-analytics-service" target="17" />
+      <module name="orders-api" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="inventory-service" options="-parameters" />
+      <module name="notification-service" options="-parameters" />
+      <module name="order-analytics-service" options="-parameters" />
+      <module name="orders-api" options="-parameters" />
+    </option>
+  </component>
+</project>
