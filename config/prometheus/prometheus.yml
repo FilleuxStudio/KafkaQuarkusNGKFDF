@@ -26,6 +26,11 @@ scrape_configs:
     static_configs:
       - targets: ['cadvisor:8080']
 
+  - job_name: 'inventory-service'
+    metrics_path: '/q/metrics'
+    static_configs:
+      - targets: ['inventory-service:8080']
+
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']

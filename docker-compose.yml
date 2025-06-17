@@ -87,6 +87,7 @@ services:
       - "8080:8080"
     environment:
       - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
     networks:
       - kafka_network
       - default
@@ -97,7 +98,7 @@ services:
       context: ./api/notifications/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
     volumes:
-      - ./api/notifications/notification-service/credentials/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json:/deployments/credentials.json:ro
+      - ./api/notifications/notification-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
@@ -119,13 +120,21 @@ services:
       args:
         MAVEN_CLI_OPTS: "-DskipTests"
     ports:
-      - "8084:8080"                        # host 8084 → container 8080
+      - "8084:8080"
+    volumes:
+      - ./api/inventorys/inventory-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
     environment:
-      - kafka.bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
+      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials/kafka-ccm-dev.json
+      - QUARKUS_HTTP_HOST=0.0.0.0
+      - QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4317
+      - QUARKUS_OTEL_SERVICE_NAME=inventory-service
     depends_on:
       - kafka1
       - kafka2
       - kafka3
+      - jaeger
+      - prometheus
     networks:
       - kafka_network
       - default

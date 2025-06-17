@@ -64,7 +64,52 @@ function App() {
     return new Uint8Array([...rawData].map((char) => char.charCodeAt(0)));
   };
 
+  const subscribeToNotifications = async () => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+        alert("Les notifications push ne sont pas supportées par ce navigateur.");
+        return;
+    }
 
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        alert("Permission refusée pour les notifications.");
+        return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+
+    // Vérifier s'il existe déjà une souscription
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+        alert("Déjà inscrit aux notifications !");
+        setIsSubscribed(true);
+        return;
+    }
+
+    const applicationServerKey = urlBase64ToUint8Array(
+        "BN1TuOmqY4c7UGurRIxzs2RJ31fwQ_02JAzuMHLrqY5izRkftHUlh9MWmbEui9IfIrBWwjdpVaKP3fHee8PiYQU"
+    );
+
+    const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+    });
+
+    console.log("Subscription :", JSON.stringify(subscription));
+
+    const response = await fetch(`${NOTIF_BASE}/notifications/subscribe/123`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription),
+    });
+
+    if (response.ok) {
+        setIsSubscribed(true);
+        alert("Inscription réussie aux notifications !");
+    } else {
+        alert("Erreur lors de l'inscription.");
+    }
+  };
 
   return (
     <Router>
@@ -80,6 +125,15 @@ function App() {
                 <section className="product-section">
                   <ProductList onAddToCart={addToCart} />
                 </section>
+                
+                {/* PRESERVED: All your notification functionality */}
+                <div>
+                  <h1>Notifications Push avec Quarkus</h1>
+                  <button onClick={subscribeToNotifications} disabled={isSubscribed}>
+                      {isSubscribed ? "Déjà inscrit" : "S'inscrire aux notifications"}
+                  </button>
+                </div>
+                <NotificationComponent />
               </>
             } 
           />
