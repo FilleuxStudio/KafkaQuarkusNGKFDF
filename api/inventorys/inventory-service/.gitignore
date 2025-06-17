@@ -50,8 +50,6 @@ nb-configuration.xml
 .certs/
 
 # Exclude credentials folder (and its contents) from git
-/credentials/
-**/credentials/
 **/credentials/*.json
 
 # Exclude kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json from git

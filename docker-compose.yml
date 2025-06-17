@@ -146,11 +146,8 @@ services:
       dockerfile: src/main/docker/Dockerfile.jvm
     ports:
       - "8085:8080"
-    volumes:
-      - ./api/analytics/order-analytics-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
-      - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
     depends_on:
       - kafka1
       - kafka2
