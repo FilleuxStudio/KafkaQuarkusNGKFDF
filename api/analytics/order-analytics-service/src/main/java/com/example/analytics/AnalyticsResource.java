@@ -5,9 +5,20 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StoreQueryParameters;
+import org.apache.kafka.streams.state.ReadOnlyWindowStore;
+import org.apache.kafka.streams.state.WindowStoreIterator;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.jboss.logging.Logger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicReference;
+import java.time.Instant;
 
 @Path("/analytics")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,6 +29,9 @@ public class AnalyticsResource {
 
     @Inject
     KafkaStreams kafkaStreams;
+    
+    @Inject
+    AlertManager alertManager;
 
     @GET
     @Path("/status")
@@ -26,43 +40,192 @@ public class AnalyticsResource {
         status.put("service", "order-analytics-service");
         status.put("status", "running");
         status.put("kafkaStreamsState", kafkaStreams.state().name());
+        status.put("timestamp", System.currentTimeMillis());
         return Response.ok(status).build();
     }
 
     @GET
-    @Path("/health")
-    public Response getHealth() {
-        boolean isHealthy = kafkaStreams.state() == KafkaStreams.State.RUNNING;
-        Map<String, Object> health = new HashMap<>();
-        health.put("healthy", isHealthy);
-        health.put("state", kafkaStreams.state().name());
-        
-        if (isHealthy) {
-            return Response.ok(health).build();
-        } else {
-            return Response.serverError().entity(health).build();
+    @Path("/live-data")
+    public Response getLiveData() {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Long> orderCounts = new HashMap<>();
+            AtomicReference<Double> totalRevenue = new AtomicReference<>(0.0);
+            boolean storeReady = false;
+            
+            if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
+                try {
+                    long currentTime = System.currentTimeMillis();
+                    // FIXED: Query only recent non-overlapping windows
+                    long windowStart = currentTime - (2 * 60 * 1000); // Last 2 minutes instead of 5
+                    
+                    LOG.infof("🔍 Querying state stores from %d to %d", windowStart, currentTime);
+                    
+                    ReadOnlyWindowStore<String, Long> orderStore = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            "product-order-counts", 
+                            QueryableStoreTypes.windowStore()
+                        )
+                    );
+                    
+                    ReadOnlyWindowStore<String, Double> revenueStore = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            "product-revenue-analytics", 
+                            QueryableStoreTypes.windowStore()
+                        )
+                    );
+                    
+                    // FIXED: Track which windows we've already processed to avoid duplicates
+                    Set<String> processedWindows = new HashSet<>();
+                    
+                    try {
+                        orderStore.all().forEachRemaining(keyValue -> {
+                            String product = keyValue.key.key();
+                            long windowStartTime = keyValue.key.window().start(); 
+                            long windowEndTime = keyValue.key.window().end();
+                            
+                            // Create unique window identifier
+                            String windowId = product + "-" + windowStartTime + "-" + windowEndTime;
+                            
+                            // Only include recent, non-duplicate windows
+                            if (windowEndTime >= windowStart && !processedWindows.contains(windowId)) {
+                                processedWindows.add(windowId);
+                                Long currentCount = orderCounts.getOrDefault(product, 0L);
+                                orderCounts.put(product, currentCount + keyValue.value);
+                                LOG.infof("📊 Found orders: %s = %d (window: %d-%d)", 
+                                    product, keyValue.value, windowStartTime, windowEndTime);
+                            }
+                        });
+                        
+                        Set<String> processedRevenueWindows = new HashSet<>();
+                        revenueStore.all().forEachRemaining(keyValue -> {
+                            String product = keyValue.key.key();
+                            long windowStartTime = keyValue.key.window().start();
+                            long windowEndTime = keyValue.key.window().end();
+                            
+                            String windowId = product + "-" + windowStartTime + "-" + windowEndTime;
+                            
+                            if (windowEndTime >= windowStart && !processedRevenueWindows.contains(windowId)) {
+                                processedRevenueWindows.add(windowId);
+                                totalRevenue.updateAndGet(current -> current + keyValue.value);
+                                LOG.infof("💰 Found revenue: %.2f (window: %d-%d)", 
+                                    keyValue.value, windowStartTime, windowEndTime);
+                            }
+                        });
+                        
+                        storeReady = true;
+                        response.put("dataSource", "✅ LIVE Kafka Streams Data (De-duplicated)");
+                        
+                    } catch (Exception e) {
+                        LOG.errorf(e, "❌ Error querying state stores");
+                        response.put("dataSource", "❌ State store query failed: " + e.getMessage());
+                    }
+                    
+                } catch (InvalidStateStoreException e) {
+                    response.put("dataSource", "⚠️ State stores initializing...");
+                    LOG.warn("State stores not ready yet");
+                }
+            } else {
+                response.put("dataSource", "❌ Kafka Streams not running - State: " + kafkaStreams.state().name());
+            }
+            
+            double revenueValue = totalRevenue.get();
+            double profit = revenueValue;
+            
+            response.put("orderCounts", orderCounts);
+            response.put("totalRevenue", Math.round(revenueValue * 100.0) / 100.0);
+            response.put("profit", Math.round(profit * 100.0) / 100.0);
+            response.put("isLive", kafkaStreams.state() == KafkaStreams.State.RUNNING && storeReady);
+            response.put("timestamp", System.currentTimeMillis());
+            response.put("windowInfo", "Last 2 minutes (de-duplicated)");
+            response.put("storeReady", storeReady);
+            response.put("totalOrdersFound", orderCounts.values().stream().mapToLong(Long::longValue).sum());
+            
+            LOG.infof("📈 De-duplicated live data: orders=%s, revenue=%.2f, profit=%.2f", 
+                orderCounts, revenueValue, profit);
+            
+            return Response.ok(response).build();
+            
+        } catch (Exception e) {
+            LOG.error("Error getting live data", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to fetch live data: " + e.getMessage());
+            errorResponse.put("dataSource", "❌ Error occurred");
+            errorResponse.put("isLive", false);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
         }
     }
 
     @GET
-    @Path("/summary")
-    public Response getSummary() {
+    @Path("/debug/state-stores")
+    public Response debugStateStores() {
         try {
-            Map<String, Object> summary = new HashMap<>();
-            summary.put("message", "Analytics service is processing order streams");
-            summary.put("topics", new String[]{"orders", "order-analytics", "revenue-analytics"});
-            summary.put("windowSize", "5 minutes");
-            summary.put("features", new String[]{
-                "Product order count analytics",
-                "Revenue analytics per product", 
-                "High volume alerts",
-                "Real-time stream processing"
-            });
+            Map<String, Object> debug = new HashMap<>();
             
-            return Response.ok(summary).build();
+            if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
+                try {
+                    ReadOnlyWindowStore<String, Long> orderStore = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            "product-order-counts", 
+                            QueryableStoreTypes.windowStore()
+                        )
+                    );
+                    
+                    List<Map<String, Object>> orderEntries = new ArrayList<>();
+                    orderStore.all().forEachRemaining(keyValue -> {
+                        Map<String, Object> entry = new HashMap<>();
+                        entry.put("product", keyValue.key.key());
+                        entry.put("count", keyValue.value);
+                        entry.put("windowStart", keyValue.key.window().start());
+                        entry.put("windowEnd", keyValue.key.window().end());
+                        entry.put("windowStartFormatted", new java.util.Date(keyValue.key.window().start()).toString());
+                        entry.put("windowEndFormatted", new java.util.Date(keyValue.key.window().end()).toString());
+                        orderEntries.add(entry);
+                    });
+                    
+                    debug.put("orderStoreEntries", orderEntries);
+                    debug.put("orderStoreSize", orderEntries.size());
+                    
+                } catch (Exception e) {
+                    debug.put("orderStoreError", e.getMessage());
+                }
+                
+                try {
+                    ReadOnlyWindowStore<String, Double> revenueStore = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            "product-revenue-analytics", 
+                            QueryableStoreTypes.windowStore()
+                        )
+                    );
+                    
+                    List<Map<String, Object>> revenueEntries = new ArrayList<>();
+                    revenueStore.all().forEachRemaining(keyValue -> {
+                        Map<String, Object> entry = new HashMap<>();
+                        entry.put("product", keyValue.key.key());
+                        entry.put("revenue", keyValue.value);
+                        entry.put("windowStart", keyValue.key.window().start());
+                        entry.put("windowEnd", keyValue.key.window().end());
+                        entry.put("windowStartFormatted", new java.util.Date(keyValue.key.window().start()).toString());
+                        entry.put("windowEndFormatted", new java.util.Date(keyValue.key.window().end()).toString());
+                        revenueEntries.add(entry);
+                    });
+                    
+                    debug.put("revenueStoreEntries", revenueEntries);
+                    debug.put("revenueStoreSize", revenueEntries.size());
+                    
+                } catch (Exception e) {
+                    debug.put("revenueStoreError", e.getMessage());
+                }
+            }
+            
+            debug.put("kafkaStreamsState", kafkaStreams.state().name());
+            debug.put("timestamp", System.currentTimeMillis());
+            
+            return Response.ok(debug).build();
+            
         } catch (Exception e) {
-            LOG.error("Error getting analytics summary", e);
-            return Response.serverError().build();
+            LOG.error("Error in debug endpoint", e);
+            return Response.serverError().entity("Debug failed: " + e.getMessage()).build();
         }
     }
 
@@ -72,15 +235,16 @@ public class AnalyticsResource {
         try {
             Map<String, Object> stats = new HashMap<>();
             stats.put("timestamp", System.currentTimeMillis());
-            stats.put("status", "live");
-            stats.put("message", "Real-time analytics active");
+            stats.put("status", kafkaStreams.state() == KafkaStreams.State.RUNNING ? "live" : "not_ready");
+            stats.put("message", kafkaStreams.state() == KafkaStreams.State.RUNNING ? 
+                "Real-time analytics active" : "Kafka Streams not ready: " + kafkaStreams.state().name());
             stats.put("kafkaStreamsState", kafkaStreams.state().name());
             stats.put("isProcessing", kafkaStreams.state() == KafkaStreams.State.RUNNING);
             
             return Response.ok(stats).build();
         } catch (Exception e) {
             LOG.error("Error getting real-time stats", e);
-            return Response.serverError().build();
+            return Response.serverError().entity("Failed to get stats: " + e.getMessage()).build();
         }
     }
 
@@ -88,91 +252,18 @@ public class AnalyticsResource {
     @Path("/alerts")
     public Response getActiveAlerts() {
         try {
-            Map<String, Object> alerts = new HashMap<>();
-            alerts.put("highVolumeAlerts", "Check logs for recent alerts");
-            alerts.put("lastUpdate", System.currentTimeMillis());
-            alerts.put("alertsActive", kafkaStreams.state() == KafkaStreams.State.RUNNING);
-            alerts.put("systemStatus", "monitoring");
-            
-            return Response.ok(alerts).build();
-        } catch (Exception e) {
-            LOG.error("Error getting alerts", e);
-            return Response.serverError().build();
-        }
-    }
-
-    @GET
-    @Path("/product-stats")
-    public Response getProductStats() {
-        try {
             Map<String, Object> response = new HashMap<>();
-            Map<String, Object> productStats = new HashMap<>();
+            List<AlertManager.Alert> alerts = alertManager.getRecentAlerts();
             
-            // For now, return basic structure that works
-            if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
-                productStats.put("iPhone 14 Pro", 5);
-                productStats.put("MacBook Pro 16\"", 2);
-                productStats.put("AirPods Pro", 8);
-                response.put("dataSource", "✅ REAL Kafka Streams (basic version)");
-            } else {
-                response.put("dataSource", "❌ Kafka Streams not running yet");
-            }
-            
-            response.put("productOrderCounts", productStats);
+            response.put("alerts", alerts);
+            response.put("alertCount", alerts.size());
+            response.put("hasActiveAlerts", !alerts.isEmpty());
             response.put("timestamp", System.currentTimeMillis());
-            response.put("storeSize", productStats.size());
             
             return Response.ok(response).build();
         } catch (Exception e) {
-            LOG.error("Error getting product stats", e);
-            return Response.serverError().build();
-        }
-    }
-
-    @GET
-    @Path("/recent-orders")
-    public Response getRecentOrders() {
-        try {
-            Map<String, Object> recentData = new HashMap<>();
-            
-            // Basic structure that works
-            recentData.put("recentOrders", new java.util.ArrayList<>());
-            recentData.put("totalRevenue", 1234.56);
-            recentData.put("windowInfo", "Last 5 minutes");
-            recentData.put("dataSource", "✅ Analytics service running");
-            
-            return Response.ok(recentData).build();
-        } catch (Exception e) {
-            LOG.error("Error getting recent orders", e);
-            return Response.serverError().build();
-        }
-    }
-
-    @GET
-    @Path("/live-data")
-    public Response getLiveData() {
-        try {
-            Map<String, Object> liveData = new HashMap<>();
-            
-            // Basic live data that definitely works
-            Map<String, Object> orderCounts = new HashMap<>();
-            if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
-                orderCounts.put("iPhone 14 Pro", 12);
-                orderCounts.put("MacBook Pro 16\"", 4);
-                orderCounts.put("AirPods Pro", 15);
-            }
-            
-            liveData.put("orderCounts", orderCounts);
-            liveData.put("totalRevenue", 5432.10);
-            liveData.put("lastUpdated", System.currentTimeMillis());
-            liveData.put("windowInfo", "Live data from Kafka Streams");
-            liveData.put("isLive", kafkaStreams.state() == KafkaStreams.State.RUNNING);
-            liveData.put("dataSource", "✅ 100% WORKING - Basic Version");
-            
-            return Response.ok(liveData).build();
-        } catch (Exception e) {
-            LOG.error("Error getting live data", e);
-            return Response.serverError().build();
+            LOG.error("Error getting alerts", e);
+            return Response.serverError().entity("Failed to get alerts: " + e.getMessage()).build();
         }
     }
 }
