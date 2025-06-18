@@ -18,7 +18,7 @@ const db = getFirestore(app);
 const StockManagement = () => {
   const [products, setProducts] = useState([]);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", price: "", description: "", stock: "" });
+  const [form, setForm] = useState({ name: "", price: "", description: "", stock: "", image: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginInput, setLoginInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,6 @@ const StockManagement = () => {
     if (loginInput === "admin") {
       setIsLoggedIn(true);
     } else {
-      // Modern error feedback
       const errorDiv = document.createElement('div');
       errorDiv.textContent = 'Incorrect password';
       errorDiv.style.cssText = `
@@ -62,14 +61,12 @@ const StockManagement = () => {
     }
   };
 
-  // ✅ NEW: Dedicated refresh function
   const refreshProducts = async () => {
     try {
       setRefreshing(true);
       const querySnapshot = await getDocs(collection(db, "inventory"));
       setProducts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       
-      // Success feedback
       const successDiv = document.createElement('div');
       successDiv.textContent = 'Inventory refreshed successfully!';
       successDiv.style.cssText = `
@@ -92,7 +89,6 @@ const StockManagement = () => {
     } catch (error) {
       console.error("Erreur lors du rafraîchissement:", error);
       
-      // Error feedback
       const errorDiv = document.createElement('div');
       errorDiv.textContent = 'Failed to refresh inventory';
       errorDiv.style.cssText = `
@@ -118,7 +114,13 @@ const StockManagement = () => {
 
   const startEdit = (prod) => {
     setEditing(prod.id);
-    setForm({ name: prod.name, price: prod.price, description: prod.description, stock: prod.stock });
+    setForm({ 
+      name: prod.name, 
+      price: prod.price, 
+      description: prod.description, 
+      stock: prod.stock,
+      image: prod.image || ""
+    });
   };
 
   const saveEdit = async (id) => {
@@ -127,7 +129,8 @@ const StockManagement = () => {
         name: form.name,
         price: Number(form.price),
         description: form.description,
-        stock: Number(form.stock)
+        stock: Number(form.stock),
+        image: form.image
       });
       setEditing(null);
       fetchProducts();
@@ -153,10 +156,31 @@ const StockManagement = () => {
         name: form.name,
         price: Number(form.price),
         description: form.description,
-        stock: Number(form.stock)
+        stock: Number(form.stock),
+        image: form.image || `https://via.placeholder.com/400x400/f5f5f7/1d1d1f?text=${encodeURIComponent(form.name)}`
       });
-      setForm({ name: "", price: "", description: "", stock: "" });
+      setForm({ name: "", price: "", description: "", stock: "", image: "" });
       fetchProducts();
+      
+      const successDiv = document.createElement('div');
+      successDiv.textContent = 'Product added successfully!';
+      successDiv.style.cssText = `
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(76, 175, 80, 0.3);
+        z-index: 10000;
+        font-family: inherit;
+        font-weight: 600;
+        animation: slideIn 0.3s ease;
+      `;
+      document.body.appendChild(successDiv);
+      setTimeout(() => successDiv.remove(), 2000);
+      
     } catch (error) {
       console.error("Erreur lors de l'ajout:", error);
     }
@@ -167,7 +191,6 @@ const StockManagement = () => {
     fetchProducts();
   }, [isLoggedIn]);
 
-  // Apple-inspired login screen
   if (!isLoggedIn) {
     return (
       <div className="app-container" style={{ 
@@ -192,7 +215,6 @@ const StockManagement = () => {
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Glassmorphism overlay */}
           <div style={{
             position: 'absolute',
             top: 0,
@@ -204,7 +226,6 @@ const StockManagement = () => {
           }}></div>
           
           <div style={{ position: 'relative', zIndex: 2 }}>
-            {/* Lock Icon */}
             <div style={{
               width: '80px',
               height: '80px',
@@ -311,7 +332,7 @@ const StockManagement = () => {
       background: 'linear-gradient(135deg, var(--apple-white) 0%, #ffffff 100%)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
     }}>
-      {/* ✅ FIXED: Header with emoji fix and refresh button */}
+      {/* Header */}
       <div style={{
         background: 'rgba(251, 251, 253, 0.95)',
         backdropFilter: 'blur(20px)',
@@ -324,36 +345,32 @@ const StockManagement = () => {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{
-                      fontSize: '2.5rem',
-                      fontWeight: '800',
-                      letterSpacing: '-0.02em', // ✅ FIXED: Less aggressive spacing
-                      margin: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem' // ✅ FIXED: Proper spacing between emoji and text
-                    }}>
-                      {/* ✅ FIXED: Emoji separate from gradient text */}
-                      <span style={{
-                        fontSize: '2.5rem',
-                        fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif'
-                      }}>
-                        📦
-                      </span>
-                      
-                      {/* ✅ FIXED: Text with gradient effect only */}
-                      <span style={{
-                        background: 'linear-gradient(135deg, var(--apple-black) 0%, var(--apple-gray) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
-                      }}>
-                        Stock Management
-                      </span>
-                    </h1>
-
+            fontSize: '2.5rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              fontSize: '2.5rem',
+              fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif'
+            }}>
+              📦
+            </span>
+            
+            <span style={{
+              background: 'linear-gradient(135deg, var(--apple-black) 0%, var(--apple-gray) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Stock Management
+            </span>
+          </h1>
           
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            {/* ✅ NEW: Refresh button */}
             <button
               onClick={refreshProducts}
               disabled={refreshing || loading}
@@ -373,18 +390,6 @@ const StockManagement = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
-              }}
-              onMouseEnter={e => {
-                if (!refreshing && !loading) {
-                  e.target.style.transform = 'translateY(-1px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(0, 102, 204, 0.4)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!refreshing && !loading) {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
-                }
               }}
             >
               <span style={{ 
@@ -449,7 +454,8 @@ const StockManagement = () => {
               { key: 'name', placeholder: 'Product Name', icon: '🏷️' },
               { key: 'price', placeholder: 'Price ($)', icon: '💰' },
               { key: 'description', placeholder: 'Description', icon: '📝' },
-              { key: 'stock', placeholder: 'Stock Quantity', icon: '📊' }
+              { key: 'stock', placeholder: 'Stock Quantity', icon: '📊' },
+              { key: 'image', placeholder: 'Image URL', icon: '🖼️' }
             ].map(field => (
               <div key={field.key} style={{ position: 'relative' }}>
                 <span style={{
@@ -488,6 +494,36 @@ const StockManagement = () => {
               </div>
             ))}
           </div>
+          
+          {/* Image Preview */}
+          {form.image && (
+            <div style={{
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              <p style={{ 
+                color: 'var(--apple-text-gray)', 
+                marginBottom: '1rem',
+                fontSize: '0.9rem'
+              }}>
+                Image Preview:
+              </p>
+              <img 
+                src={form.image} 
+                alt="Product preview"
+                style={{
+                  maxWidth: '200px',
+                  maxHeight: '200px',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           
           <button
             onClick={addProduct}
@@ -544,7 +580,7 @@ const StockManagement = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'rgba(0, 102, 204, 0.05)' }}>
-                    {['Product Name', 'Price', 'Description', 'Stock', 'Actions'].map(header => (
+                    {['Image', 'Product Name', 'Price', 'Description', 'Stock', 'Actions'].map(header => (
                       <th key={header} style={{
                         padding: '1rem',
                         textAlign: 'left',
@@ -565,6 +601,41 @@ const StockManagement = () => {
                                  index % 2 === 0 ? 'transparent' : 'rgba(0, 0, 0, 0.02)',
                       transition: 'all 0.3s ease'
                     }}>
+                      {/* Image Column */}
+                      <td style={{ padding: '1rem', borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                        {editing === prod.id ? (
+                          <input
+                            value={form.image}
+                            onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
+                            placeholder="Image URL"
+                            style={{
+                              width: '150px',
+                              padding: '0.5rem',
+                              border: '2px solid var(--apple-blue)',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              outline: 'none'
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src={prod.image || `https://via.placeholder.com/80x80/f5f5f7/1d1d1f?text=${encodeURIComponent(prod.name)}`}
+                            alt={prod.name}
+                            style={{
+                              width: '60px',
+                              height: '60px',
+                              borderRadius: '8px',
+                              objectFit: 'cover',
+                              border: '1px solid rgba(0, 0, 0, 0.1)'
+                            }}
+                            onError={(e) => {
+                              e.target.src = `https://via.placeholder.com/80x80/f5f5f7/1d1d1f?text=${encodeURIComponent(prod.name)}`;
+                            }}
+                          />
+                        )}
+                      </td>
+                      
+                      {/* Other Columns */}
                       {['name', 'price', 'description', 'stock'].map(field => (
                         <td key={field} style={{ padding: '1rem', borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                           {editing === prod.id ? (
@@ -590,6 +661,8 @@ const StockManagement = () => {
                           )}
                         </td>
                       ))}
+                      
+                      {/* Actions Column */}
                       <td style={{ padding: '1rem', borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           {editing === prod.id ? (
@@ -666,7 +739,6 @@ const StockManagement = () => {
         </div>
       </div>
       
-      {/* ✅ CSS Animation for refresh button */}
       <style jsx>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
