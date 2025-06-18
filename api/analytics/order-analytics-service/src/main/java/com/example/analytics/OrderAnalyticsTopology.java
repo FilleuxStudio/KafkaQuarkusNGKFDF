@@ -35,60 +35,46 @@ public class OrderAnalyticsTopology {
         orders.foreach((key, order) -> 
             LOG.infof("Processing order: %s for product: %s", order.getId(), order.getProduct()));
 
-        // Product Order Count Analytics (unchanged)
+        // ✅ FIXED: Tumbling windows - no overlapping data
         orders
             .groupBy((key, order) -> order.getProduct())
-            .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
-            .count(Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("product-order-counts")
-                .withKeySerde(Serdes.String())
-                .withValueSerde(Serdes.Long()))
-            .toStream()
-            .map((windowedKey, count) -> {
-                String product = windowedKey.key();
-                long windowStart = windowedKey.window().start();
-                long windowEnd = windowedKey.window().end();
-                
-                ProductAnalytics analytics = new ProductAnalytics(
-                    product, count, 0.0, windowStart, windowEnd);
-                
-                LOG.infof("Product %s: %d orders in window [%d-%d]", 
-                    product, count, windowStart, windowEnd);
-                
-                return KeyValue.pair(product, analytics);
-            })
-            .to("order-analytics", Produced.with(Serdes.String(), analyticsSerde));
-
-        // Revenue Analytics (unchanged)
-        orders
-            .groupBy((key, order) -> order.getProduct())
-            .windowedBy(TimeWindows.of(Duration.ofMinutes(5)).advanceBy(Duration.ofMinutes(1)))
+            .windowedBy(TimeWindows.of(Duration.ofMinutes(5)))  // ← Removed .advanceBy() = Tumbling windows
             .aggregate(
-                () -> 0.0,
-                (key, order, aggregate) -> aggregate + order.getTotalPrice(),
-                Materialized.<String, Double, WindowStore<Bytes, byte[]>>as("product-revenue-analytics")
+                // Initialize with empty analytics
+                () -> new ProductAnalytics("", 0, 0.0, 0, 0),
+                // Aggregate both count and revenue together
+                (product, order, analytics) -> {
+                    // Update the analytics object with both metrics
+                    analytics.setProduct(product);
+                    analytics.setOrderCount(analytics.getOrderCount() + 1);
+                    analytics.setTotalRevenue(analytics.getTotalRevenue() + order.getTotalPrice());
+                    return analytics;
+                },
+                Materialized.<String, ProductAnalytics, WindowStore<Bytes, byte[]>>as("unified-product-analytics")
                     .withKeySerde(Serdes.String())
-                    .withValueSerde(Serdes.Double())
+                    .withValueSerde(analyticsSerde)
             )
             .toStream()
-            .map((windowedKey, totalRevenue) -> {
+            .map((windowedKey, analytics) -> {
                 String product = windowedKey.key();
                 long windowStart = windowedKey.window().start();
                 long windowEnd = windowedKey.window().end();
                 
-                ProductAnalytics analytics = new ProductAnalytics(
-                    product, 0, totalRevenue, windowStart, windowEnd);
+                // Set window information
+                analytics.setWindowStart(windowStart);
+                analytics.setWindowEnd(windowEnd);
                 
-                LOG.infof("Product %s: $%.2f revenue in window [%d-%d]", 
-                    product, totalRevenue, windowStart, windowEnd);
+                LOG.infof("✅ TUMBLING WINDOW - Product %s: %d orders, $%.2f revenue in window [%d-%d]", 
+                    product, analytics.getOrderCount(), analytics.getTotalRevenue(), windowStart, windowEnd);
                 
                 return KeyValue.pair(product, analytics);
             })
-            .to("revenue-analytics", Produced.with(Serdes.String(), analyticsSerde));
+            .to("unified-analytics", Produced.with(Serdes.String(), analyticsSerde));
 
-        // UPDATED: High Volume Alert with AlertManager integration
+        // ✅ FIXED: Tumbling windows for alerts too
         orders
             .groupBy((key, order) -> order.getProduct())
-            .windowedBy(TimeWindows.of(Duration.ofMinutes(2)).advanceBy(Duration.ofMinutes(1)))
+            .windowedBy(TimeWindows.of(Duration.ofMinutes(2)))  // ← Removed .advanceBy()
             .count()
             .filter((windowedKey, count) -> count > 3)
             .toStream()
@@ -97,11 +83,10 @@ public class OrderAnalyticsTopology {
                 long windowStart = windowedKey.window().start();
                 long windowEnd = windowedKey.window().end();
                 
-                // Store alert in AlertManager instead of just logging
                 alertManager.addAlert(product, count, windowStart, windowEnd);
             });
 
-        LOG.info("Kafka Streams topology built successfully");
+        LOG.info("✅ Kafka Streams topology built successfully with TUMBLING WINDOWS");
         return builder.build();
     }
 }
