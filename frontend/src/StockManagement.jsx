@@ -25,8 +25,12 @@ const StockManagement = () => {
 
   // Fonction pour charger les produits
   const fetchProducts = async () => {
-    const querySnapshot = await getDocs(collection(db, "inventory"));
-    setProducts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      const querySnapshot = await getDocs(collection(db, "inventory"));
+      setProducts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      console.error("Erreur lors du chargement des produits:", error);
+    }
   };
 
   useEffect(() => {
@@ -55,32 +59,47 @@ const StockManagement = () => {
   };
 
   const saveEdit = async (id) => {
-    await updateDoc(doc(db, "inventory", id), {
-      name: form.name,
-      price: Number(form.price),
-      description: form.description,
-      stock: Number(form.stock)
-    });
-    setEditing(null);
-    fetchProducts();
+    try {
+      await updateDoc(doc(db, "inventory", id), {
+        name: form.name,
+        price: Number(form.price),
+        description: form.description,
+        stock: Number(form.stock)
+      });
+      setEditing(null);
+      fetchProducts();
+    } catch (error) {
+      console.error("Erreur lors de la modification:", error);
+      alert("Erreur lors de la modification du produit");
+    }
   };
 
   const deleteProduct = async (id) => {
     if(window.confirm("Supprimer ce produit ?")) {
-      await deleteDoc(doc(db, "inventory", id));
-      fetchProducts();
+      try {
+        await deleteDoc(doc(db, "inventory", id));
+        fetchProducts();
+      } catch (error) {
+        console.error("Erreur lors de la suppression:", error);
+        alert("Erreur lors de la suppression du produit");
+      }
     }
   };
 
   const addProduct = async () => {
-    await addDoc(collection(db, "inventory"), {
-      name: form.name,
-      price: Number(form.price),
-      description: form.description,
-      stock: Number(form.stock)
-    });
-    setForm({ name: "", price: "", description: "", stock: "" });
-    fetchProducts();
+    try {
+      await addDoc(collection(db, "inventory"), {
+        name: form.name,
+        price: Number(form.price),
+        description: form.description,
+        stock: Number(form.stock)
+      });
+      setForm({ name: "", price: "", description: "", stock: "" });
+      fetchProducts();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout:", error);
+      alert("Erreur lors de l'ajout du produit");
+    }
   };
 
   return (
