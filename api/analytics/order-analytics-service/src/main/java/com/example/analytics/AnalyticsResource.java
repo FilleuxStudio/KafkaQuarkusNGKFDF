@@ -7,7 +7,6 @@ import jakarta.ws.rs.core.Response;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
-import org.apache.kafka.streams.state.WindowStoreIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.jboss.logging.Logger;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
-import java.time.Instant;
 
 @Path("/analytics")
 @Produces(MediaType.APPLICATION_JSON)
@@ -56,74 +54,53 @@ public class AnalyticsResource {
             if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
                 try {
                     long currentTime = System.currentTimeMillis();
-                    // FIXED: Query only recent non-overlapping windows
-                    long windowStart = currentTime - (2 * 60 * 1000); // Last 2 minutes instead of 5
+                    long windowStart = currentTime - (2 * 60 * 1000); // Last 2 minutes
                     
-                    LOG.infof("🔍 Querying state stores from %d to %d", windowStart, currentTime);
+                    LOG.infof("🔍 Querying unified analytics store from %d to %d", windowStart, currentTime);
                     
-                    ReadOnlyWindowStore<String, Long> orderStore = kafkaStreams.store(
+                    // ✅ UPDATED: Query the new unified analytics store
+                    ReadOnlyWindowStore<String, ProductAnalytics> analyticsStore = kafkaStreams.store(
                         StoreQueryParameters.fromNameAndType(
-                            "product-order-counts", 
+                            "unified-product-analytics", 
                             QueryableStoreTypes.windowStore()
                         )
                     );
                     
-                    ReadOnlyWindowStore<String, Double> revenueStore = kafkaStreams.store(
-                        StoreQueryParameters.fromNameAndType(
-                            "product-revenue-analytics", 
-                            QueryableStoreTypes.windowStore()
-                        )
-                    );
-                    
-                    // FIXED: Track which windows we've already processed to avoid duplicates
                     Set<String> processedWindows = new HashSet<>();
                     
                     try {
-                        orderStore.all().forEachRemaining(keyValue -> {
+                        analyticsStore.all().forEachRemaining(keyValue -> {
                             String product = keyValue.key.key();
+                            ProductAnalytics analytics = keyValue.value;
                             long windowStartTime = keyValue.key.window().start(); 
                             long windowEndTime = keyValue.key.window().end();
                             
-                            // Create unique window identifier
                             String windowId = product + "-" + windowStartTime + "-" + windowEndTime;
                             
-                            // Only include recent, non-duplicate windows
                             if (windowEndTime >= windowStart && !processedWindows.contains(windowId)) {
                                 processedWindows.add(windowId);
+                                
+                                // Get both order count AND revenue from unified analytics
                                 Long currentCount = orderCounts.getOrDefault(product, 0L);
-                                orderCounts.put(product, currentCount + keyValue.value);
-                                LOG.infof("📊 Found orders: %s = %d (window: %d-%d)", 
-                                    product, keyValue.value, windowStartTime, windowEndTime);
-                            }
-                        });
-                        
-                        Set<String> processedRevenueWindows = new HashSet<>();
-                        revenueStore.all().forEachRemaining(keyValue -> {
-                            String product = keyValue.key.key();
-                            long windowStartTime = keyValue.key.window().start();
-                            long windowEndTime = keyValue.key.window().end();
-                            
-                            String windowId = product + "-" + windowStartTime + "-" + windowEndTime;
-                            
-                            if (windowEndTime >= windowStart && !processedRevenueWindows.contains(windowId)) {
-                                processedRevenueWindows.add(windowId);
-                                totalRevenue.updateAndGet(current -> current + keyValue.value);
-                                LOG.infof("💰 Found revenue: %.2f (window: %d-%d)", 
-                                    keyValue.value, windowStartTime, windowEndTime);
+                                orderCounts.put(product, currentCount + analytics.getOrderCount());
+                                totalRevenue.updateAndGet(current -> current + analytics.getTotalRevenue());
+                                
+                                LOG.infof("📊 Found unified data: %s = %d orders, $%.2f revenue (window: %d-%d)", 
+                                    product, analytics.getOrderCount(), analytics.getTotalRevenue(), windowStartTime, windowEndTime);
                             }
                         });
                         
                         storeReady = true;
-                        response.put("dataSource", "✅ LIVE Kafka Streams Data (De-duplicated)");
+                        response.put("dataSource", "✅ LIVE Unified Kafka Streams Data");
                         
                     } catch (Exception e) {
-                        LOG.errorf(e, "❌ Error querying state stores");
-                        response.put("dataSource", "❌ State store query failed: " + e.getMessage());
+                        LOG.errorf(e, "❌ Error querying unified analytics store");
+                        response.put("dataSource", "❌ Unified store query failed: " + e.getMessage());
                     }
                     
                 } catch (InvalidStateStoreException e) {
-                    response.put("dataSource", "⚠️ State stores initializing...");
-                    LOG.warn("State stores not ready yet");
+                    response.put("dataSource", "⚠️ Unified analytics store initializing...");
+                    LOG.warn("Unified analytics store not ready yet");
                 }
             } else {
                 response.put("dataSource", "❌ Kafka Streams not running - State: " + kafkaStreams.state().name());
@@ -137,11 +114,11 @@ public class AnalyticsResource {
             response.put("profit", Math.round(profit * 100.0) / 100.0);
             response.put("isLive", kafkaStreams.state() == KafkaStreams.State.RUNNING && storeReady);
             response.put("timestamp", System.currentTimeMillis());
-            response.put("windowInfo", "Last 2 minutes (de-duplicated)");
+            response.put("windowInfo", "Last 2 minutes (unified analytics)");
             response.put("storeReady", storeReady);
             response.put("totalOrdersFound", orderCounts.values().stream().mapToLong(Long::longValue).sum());
             
-            LOG.infof("📈 De-duplicated live data: orders=%s, revenue=%.2f, profit=%.2f", 
+            LOG.infof("📈 Unified analytics response: orders=%s, revenue=%.2f, profit=%.2f", 
                 orderCounts, revenueValue, profit);
             
             return Response.ok(response).build();
@@ -164,57 +141,33 @@ public class AnalyticsResource {
             
             if (kafkaStreams.state() == KafkaStreams.State.RUNNING) {
                 try {
-                    ReadOnlyWindowStore<String, Long> orderStore = kafkaStreams.store(
+                    // ✅ UPDATED: Debug the new unified analytics store
+                    ReadOnlyWindowStore<String, ProductAnalytics> analyticsStore = kafkaStreams.store(
                         StoreQueryParameters.fromNameAndType(
-                            "product-order-counts", 
+                            "unified-product-analytics", 
                             QueryableStoreTypes.windowStore()
                         )
                     );
                     
-                    List<Map<String, Object>> orderEntries = new ArrayList<>();
-                    orderStore.all().forEachRemaining(keyValue -> {
+                    List<Map<String, Object>> analyticsEntries = new ArrayList<>();
+                    analyticsStore.all().forEachRemaining(keyValue -> {
                         Map<String, Object> entry = new HashMap<>();
+                        ProductAnalytics analytics = keyValue.value;
                         entry.put("product", keyValue.key.key());
-                        entry.put("count", keyValue.value);
+                        entry.put("orderCount", analytics.getOrderCount());
+                        entry.put("totalRevenue", analytics.getTotalRevenue());
                         entry.put("windowStart", keyValue.key.window().start());
                         entry.put("windowEnd", keyValue.key.window().end());
                         entry.put("windowStartFormatted", new java.util.Date(keyValue.key.window().start()).toString());
                         entry.put("windowEndFormatted", new java.util.Date(keyValue.key.window().end()).toString());
-                        orderEntries.add(entry);
+                        analyticsEntries.add(entry);
                     });
                     
-                    debug.put("orderStoreEntries", orderEntries);
-                    debug.put("orderStoreSize", orderEntries.size());
+                    debug.put("unifiedAnalyticsEntries", analyticsEntries);
+                    debug.put("unifiedAnalyticsSize", analyticsEntries.size());
                     
                 } catch (Exception e) {
-                    debug.put("orderStoreError", e.getMessage());
-                }
-                
-                try {
-                    ReadOnlyWindowStore<String, Double> revenueStore = kafkaStreams.store(
-                        StoreQueryParameters.fromNameAndType(
-                            "product-revenue-analytics", 
-                            QueryableStoreTypes.windowStore()
-                        )
-                    );
-                    
-                    List<Map<String, Object>> revenueEntries = new ArrayList<>();
-                    revenueStore.all().forEachRemaining(keyValue -> {
-                        Map<String, Object> entry = new HashMap<>();
-                        entry.put("product", keyValue.key.key());
-                        entry.put("revenue", keyValue.value);
-                        entry.put("windowStart", keyValue.key.window().start());
-                        entry.put("windowEnd", keyValue.key.window().end());
-                        entry.put("windowStartFormatted", new java.util.Date(keyValue.key.window().start()).toString());
-                        entry.put("windowEndFormatted", new java.util.Date(keyValue.key.window().end()).toString());
-                        revenueEntries.add(entry);
-                    });
-                    
-                    debug.put("revenueStoreEntries", revenueEntries);
-                    debug.put("revenueStoreSize", revenueEntries.size());
-                    
-                } catch (Exception e) {
-                    debug.put("revenueStoreError", e.getMessage());
+                    debug.put("unifiedAnalyticsError", e.getMessage());
                 }
             }
             
@@ -237,7 +190,7 @@ public class AnalyticsResource {
             stats.put("timestamp", System.currentTimeMillis());
             stats.put("status", kafkaStreams.state() == KafkaStreams.State.RUNNING ? "live" : "not_ready");
             stats.put("message", kafkaStreams.state() == KafkaStreams.State.RUNNING ? 
-                "Real-time analytics active" : "Kafka Streams not ready: " + kafkaStreams.state().name());
+                "Real-time unified analytics active" : "Kafka Streams not ready: " + kafkaStreams.state().name());
             stats.put("kafkaStreamsState", kafkaStreams.state().name());
             stats.put("isProcessing", kafkaStreams.state() == KafkaStreams.State.RUNNING);
             

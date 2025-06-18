@@ -35,11 +35,10 @@ public class TopicInitializer {
 
         try (AdminClient adminClient = AdminClient.create(config)) {
             
-            // Define the topics we need
+            // Define the topics we need - UPDATED for unified approach
             NewTopic[] topics = {
                 new NewTopic("orders", 3, (short) 2),
-                new NewTopic("order-analytics", 3, (short) 2),
-                new NewTopic("revenue-analytics", 3, (short) 2)
+                new NewTopic("unified-analytics", 3, (short) 2)  // ← New unified topic
             };
 
             // Create topics
