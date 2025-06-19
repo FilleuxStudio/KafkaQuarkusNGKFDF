@@ -98,7 +98,7 @@ services:
       context: ./api/notifications/notification-service
       dockerfile: src/main/docker/Dockerfile.jvm
     volumes:
-      - ./api/notifications/notification-service/credentials/kafka-ccm-dev.json:/deployments/credentials.json:ro
+      - ./api/notifications/notification-service/credentials/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json:/deployments/credentials.json:ro
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
