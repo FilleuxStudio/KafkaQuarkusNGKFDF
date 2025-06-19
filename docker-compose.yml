@@ -101,12 +101,16 @@ services:
       - ./api/notifications/notification-service/credentials/kafka-ccm-dev-cloud-df-kf-ng-48d9e2125a11.json:/deployments/credentials.json:ro
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/deployments/credentials.json
+      - GOOGLE_CLOUD_PROJECT=kafka-ccm-dev-cloud-df-kf-ng
+      - GCLOUD_PROJECT=kafka-ccm-dev-cloud-df-kf-ng
+      - GCE_METADATA_HOST=169.254.169.254
+      - GCE_METADATA_IP=169.254.169.254
       - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     ports:
       - "8083:8080"
     depends_on:
       - kafka1
-      - kafka2
+      - kafka2  
       - kafka3
     networks:
       - kafka_network
